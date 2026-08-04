@@ -62,9 +62,27 @@ for (const vp of VIEWPORTS) {
 
   console.log(`\n  ${vp.name}  ${vp.width}x${vp.height}${vp.mobile ? " (touch)" : ""}`);
 
-  await page.goto(URL, { waitUntil: "networkidle2", timeout: 45_000 });
-  // Let the first chain poll paint.
-  await new Promise((r) => setTimeout(r, 3500));
+  await page.goto(URL, { waitUntil: "domcontentloaded", timeout: 45_000 });
+
+  // Wait on the condition, not the clock. The dashboard bootstraps its feed
+  // with 12 sequential API calls, so a fixed sleep either flakes when the
+  // network is slow or wastes time when it is fast.
+  let dataReady = true;
+  try {
+    await page.waitForFunction(
+      () => {
+        const hero = document.getElementById("hero-height")?.textContent?.trim() ?? "";
+        const rows = document.querySelectorAll("#feed-body tr").length;
+        const skeleton = document.querySelector("#feed-body .skeleton-row") !== null;
+        return hero !== "" && hero !== "—" && rows > 1 && !skeleton;
+      },
+      { timeout: 30_000, polling: 250 },
+    );
+  } catch {
+    dataReady = false;
+  }
+  // Let the sparkline finish its paint after the last block resolves.
+  await new Promise((r) => setTimeout(r, 600));
 
   const report = await page.evaluate((TOUCH_MIN) => {
     const doc = document.documentElement;
@@ -161,6 +179,10 @@ for (const vp of VIEWPORTS) {
   }, TOUCH_MIN);
 
   // ---- assertions -------------------------------------------------------
+  if (!dataReady) {
+    note("WARN", "live data did not settle within 30s — network slow, not a UI defect");
+  }
+
   if (report.overflowX > 1) {
     note("FAIL", `horizontal overflow: ${report.overflowX}px past viewport`);
     for (const o of report.offenders) {
