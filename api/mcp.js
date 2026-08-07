@@ -57,6 +57,28 @@ async function openSession() {
   };
 }
 
+/**
+ * Turn a schema-validation complaint into a sentence, or return "".
+ *
+ * The SDK reports invalid params two different ways: as a thrown MCP error,
+ * and — for a tool call — as a normal result carrying isError with the raw
+ * "-32602: Input validation error" text in its content. Both mean the caller
+ * omitted or mistyped an argument, so both get the same plain-language
+ * treatment rather than leaking protocol framing into the UI.
+ */
+function readableValidationError(message) {
+  if (!/-32602/.test(message) && !/Input validation error/i.test(message)) {
+    return "";
+  }
+  const required = [...message.matchAll(/Required at (\w+)/g)].map((m) => m[1]);
+  if (required.length) {
+    return `Missing required argument${required.length > 1 ? "s" : ""}: ${required.join(", ")}.`;
+  }
+  return message
+    .replace(/^MCP error -32602:\s*/, "")
+    .replace(/^Input validation error:\s*/i, "");
+}
+
 function send(res, status, payload) {
   res.status(status);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -117,6 +139,18 @@ export default async function handler(req, res) {
       arguments: args,
     });
 
+    // Schema rejections arrive here as an isError result rather than a throw.
+    // Those are malformed requests, so answer 400 with a readable sentence.
+    if (result.isError === true) {
+      const raw = (result.content ?? [])
+        .map((c) => c.text ?? "")
+        .join("\n");
+      const readable = readableValidationError(raw);
+      if (readable) {
+        return send(res, 400, { error: readable, elapsedMs: Date.now() - started });
+      }
+    }
+
     // A tool that reports a domain error (bad address, missing block) is a
     // successful HTTP exchange — the transport worked. Surface isError so the
     // page can style it as a failure without treating it as a 500.
@@ -129,6 +163,14 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+
+    // Invalid params is a caller mistake, not a transport fault. Answering 502
+    // "Bridge failure" would send people to debug the wrong layer.
+    const readable = readableValidationError(message);
+    if (readable) {
+      return send(res, 400, { error: readable, elapsedMs: Date.now() - started });
+    }
+
     return send(res, 502, {
       error: `Bridge failure: ${message}`,
       elapsedMs: Date.now() - started,

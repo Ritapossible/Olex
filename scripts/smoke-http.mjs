@@ -175,6 +175,38 @@ try {
   check("reports a non-zero transition count", txCount > 0, `got ${txCount}`);
   check("lists each transition's program", /`credits\.aleo` →/.test(text(tx)));
 
+  // A missing required argument used to surface as a 502 "Bridge failure"
+  // wrapping a raw -32602. It is a caller mistake, so it must read as one.
+  console.log("\nomitted required arguments");
+  const noAmount = await post(port, {
+    tool: "olex_convert_credits",
+    arguments: { from: "credits" },
+  });
+  check("missing amount -> 400", noAmount.status === 400, `got ${noAmount.status}`);
+  check(
+    "names the missing field",
+    /amount/i.test(noAmount.body?.error ?? ""),
+    noAmount.body?.error,
+  );
+  check(
+    "no raw -32602 in the message",
+    !/-32602/.test(noAmount.body?.error ?? ""),
+    noAmount.body?.error,
+  );
+  check(
+    "not reported as a bridge failure",
+    !/Bridge failure/i.test(noAmount.body?.error ?? ""),
+    noAmount.body?.error,
+  );
+
+  const noTxId = await post(port, { tool: "olex_get_transaction", arguments: {} });
+  check("missing transaction_id -> 400", noTxId.status === 400, `got ${noTxId.status}`);
+  check(
+    "names transaction_id",
+    /transaction_id/i.test(noTxId.body?.error ?? ""),
+    noTxId.body?.error,
+  );
+
   console.log("\nrejections");
   const unknown = await post(port, { tool: "olex_drain_wallet" });
   check("unknown tool -> 404", unknown.status === 404, `got ${unknown.status}`);

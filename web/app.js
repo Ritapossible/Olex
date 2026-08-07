@@ -269,8 +269,10 @@ async function bootstrapFeed(tipHeight) {
 
   // History failed but the seeded tip is real. Keep the row and note the gap
   // underneath it — replacing a genuine block with a status line loses data.
+  // Don't promise a retry: the interval polls with first=false, which only
+  // prepends newer tips. Backfill runs again solely from the Refresh button.
   if (landed === 0 && feed.length === 1) {
-    appendFeedNote("Earlier blocks unavailable right now. Retrying…");
+    appendFeedNote("Earlier blocks unavailable — press Refresh to try again.");
   }
 }
 
@@ -439,7 +441,7 @@ const TOOLS = {
 
   block: {
     fields: [
-      { name: "height", label: "Block height", placeholder: "leave empty for latest", note: "optional" },
+      { name: "height", label: "Block height", placeholder: "leave empty for latest", note: "optional", optional: true },
     ],
     example: {},
     tool: "olex_get_block",
@@ -549,6 +551,25 @@ function readForm() {
 }
 
 /**
+ * Name the empty required fields, or return "" when the form is complete.
+ *
+ * Without this, `compact` strips a blank value and the key never reaches the
+ * server, so Zod answers "Required at amount" as a raw -32602 — a protocol
+ * error where the user only forgot to type something. Every field is required
+ * unless the spec marks it optional, so a new field fails safe.
+ */
+function missingRequired(spec, values) {
+  const gaps = spec.fields
+    .filter((f) => !f.optional && !String(values[f.name] ?? "").trim())
+    .map((f) => f.label);
+
+  if (!gaps.length) return "";
+  return gaps.length === 1
+    ? `${gaps[0]} is required.`
+    : `These fields are required: ${gaps.join(", ")}.`;
+}
+
+/**
  * Render a tiny safe subset of the markdown the MCP tools emit: `**bold**`
  * and `code`. The server output is live chain data, so everything is
  * HTML-escaped first and only then formatted — a `**` inside an address or
@@ -577,7 +598,11 @@ async function runTool(event) {
   const spec = TOOLS[activeTool];
   const started = performance.now();
   try {
-    const { text, ms } = await mcp(spec.tool, spec.args(readForm()));
+    const values = readForm();
+    const gap = missingRequired(spec, values);
+    if (gap) throw new Error(gap);
+
+    const { text, ms } = await mcp(spec.tool, spec.args(values));
     out.innerHTML = renderToolMarkdown(text);
     timing.textContent = `${ms ?? Math.round(performance.now() - started)} ms`;
   } catch (err) {
