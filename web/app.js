@@ -226,26 +226,70 @@ function paintStats(b) {
   }
 }
 
-/** Backfill the feed on first load so the sparkline has history immediately. */
+/**
+ * Backfill the feed on first load so the sparkline has history immediately.
+ *
+ * Each block is painted the moment it lands rather than after all twelve
+ * settle: the previous Promise.all meant one slow request held the whole table
+ * on "Loading blocks…", and a total failure left that message up forever with
+ * nothing retrying behind it. Now the tip row is already on screen from the
+ * caller, rows fill in progressively, and a wholesale failure reports itself.
+ */
 async function bootstrapFeed(tipHeight) {
   const heights = [];
   for (let i = 0; i < FEED_SIZE; i++) heights.push(tipHeight - i);
 
-  const blocks = await Promise.all(
+  let landed = 0;
+
+  await Promise.all(
     heights.map((h) =>
-      api(`/block/${h}`).then(readBlock).catch(() => null),
+      api(`/block/${h}`)
+        .then((raw) => {
+          const block = readBlock(raw);
+          if (!block.height) return;
+          if (feed.some((b) => b.height === block.height)) return;
+
+          landed++;
+          feed = [...feed, block].sort((a, b) => b.height - a.height).slice(0, FEED_SIZE);
+          paintFeed();
+          if (feed.length > 1) renderSpark([...feed].reverse());
+        })
+        .catch(() => {
+          /* One missing block must not empty the table. */
+        }),
     ),
   );
 
-  feed = blocks.filter(Boolean).sort((a, b) => b.height - a.height);
-  paintFeed();
-  renderSpark([...feed].reverse());
+  // Nothing arrived and the caller had no tip to seed: say so instead of
+  // leaving a skeleton row that reads as a hung page.
+  if (!feed.length) {
+    showFeedMessage("Could not load recent blocks. Retrying…");
+    return;
+  }
+
+  // History failed but the seeded tip is real. Keep the row and note the gap
+  // underneath it — replacing a genuine block with a status line loses data.
+  if (landed === 0 && feed.length === 1) {
+    appendFeedNote("Earlier blocks unavailable right now. Retrying…");
+  }
 }
 
 /** Replace the feed body with a single explanatory row. */
 function showFeedMessage(message) {
   const body = $("feed-body");
   body.textContent = "";
+  const tr = document.createElement("tr");
+  tr.className = "skeleton-row";
+  const td = document.createElement("td");
+  td.colSpan = 4;
+  td.textContent = message;
+  tr.appendChild(td);
+  body.appendChild(tr);
+}
+
+/** Add a status row beneath the existing rows, leaving real data in place. */
+function appendFeedNote(message) {
+  const body = $("feed-body");
   const tr = document.createElement("tr");
   tr.className = "skeleton-row";
   const td = document.createElement("td");
@@ -265,6 +309,14 @@ async function tick(first = false) {
     if (first) {
       paintStats(block);
       lastTimestamp = block.timestamp;
+
+      // Seed the tip so the table shows a real row immediately; the backfill
+      // then fills history in behind it rather than gating the first paint.
+      if (!feed.length) {
+        feed = [block];
+        paintFeed();
+      }
+
       await bootstrapFeed(block.height);
       paintStats(block);   // feed now has history, so block time can resolve
       return;
@@ -392,8 +444,15 @@ const TOOLS = {
     example: {},
     tool: "olex_get_block",
     args: ({ height }) => {
-      const h = height.trim();
-      return compact({ height: h ? Number(h) : undefined });
+      const h = (height ?? "").trim();
+      if (!h) return {};
+      // Number("abc") is NaN, which JSON-serialises to null and comes back as a
+      // raw -32602 from the schema. Reject it here with a readable message.
+      const n = Number(h);
+      if (!Number.isInteger(n) || n < 0) {
+        throw new Error("Block height must be a whole number, like 18537000.");
+      }
+      return { height: n };
     },
   },
 
