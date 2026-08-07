@@ -124,7 +124,7 @@ browser (verified `Access-Control-Allow-Origin: *`), so it needs no backend:
 cd web && python -m http.server 8080
 ```
 
-Open http://127.0.0.1:8080. It shows live block height, a transactions-per-block
+Open http://127.0.0.1:8080. It shows live block height, a block-interval
 sparkline, a recent-blocks feed, and a playground that runs the same queries the MCP
 tools run.
 

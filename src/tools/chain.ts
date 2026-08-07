@@ -267,9 +267,7 @@ export function registerChainTools(server: McpServer): void {
         "timestamp and the transaction IDs it contains.",
       inputSchema: {
         height: z
-          .number()
-          .int()
-          .nonnegative()
+          .union([z.number().int().nonnegative(), z.string()])
           .optional()
           .describe("Block height. Omit for the latest block."),
         network: networkArg,
@@ -278,19 +276,36 @@ export function registerChainTools(server: McpServer): void {
     async ({ height, network }): Promise<ToolResult> => {
       const net = resolveNetwork(network as NetworkName | undefined);
 
+      // Accept a string height: LLM clients and HTML form inputs both send
+      // numbers as text. An empty string means "latest", same as omitting it.
+      let target: number | undefined;
+      if (typeof height === "number") {
+        target = height;
+      } else if (typeof height === "string" && height.trim() !== "") {
+        const text = height.trim().replace(/[_,]/g, "");
+        if (!/^\d+$/.test(text)) {
+          return fail(
+            null,
+            `"${height}" is not a valid block height. Give a whole number, ` +
+              "or omit it for the latest block.",
+          );
+        }
+        target = Number(text);
+      }
+
       try {
-        if (height !== undefined) {
+        if (target !== undefined) {
           const tip = await getLatestHeight(net);
-          if (height > tip) {
+          if (target > tip) {
             return fail(
               null,
-              `Block ${groupDigits(height)} does not exist yet — the current ` +
+              `Block ${groupDigits(target)} does not exist yet — the current ` +
                 `${net.name} tip is ${groupDigits(tip)}.`,
             );
           }
         }
 
-        const path = height === undefined ? "/block/latest" : `/block/${height}`;
+        const path = target === undefined ? "/block/latest" : `/block/${target}`;
         const block = await apiGet<Block>(net, path);
         const meta = block.header?.metadata ?? {};
         const txs = Array.isArray(block.transactions) ? block.transactions : [];
@@ -338,11 +353,12 @@ export function registerChainTools(server: McpServer): void {
 
       try {
         const tx = await apiGet<Record<string, any>>(net, `/transaction/${id}`);
-        const transitions: any[] =
-          tx?.execution?.transitions ?? tx?.fee?.transition ? [] : [];
+        // Extract transitions from execution, or wrap fee.transition if that's all we have
         const list: any[] = Array.isArray(tx?.execution?.transitions)
           ? tx.execution.transitions
-          : transitions;
+          : tx?.fee?.transition
+            ? [tx.fee.transition]
+            : [];
 
         const lines = list.map((t: any, i: number) => {
           const inputs = Array.isArray(t?.inputs) ? t.inputs : [];
