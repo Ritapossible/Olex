@@ -294,23 +294,65 @@ async function tick(first = false) {
 
 const SAMPLE_ADDRESS = "aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px";
 
+/**
+ * Call the real Olex MCP server through the HTTP bridge.
+ *
+ * /api/mcp opens a genuine MCP session server-side and dispatches a real
+ * tools/call, so what runs here is the same code an editor gets over stdio.
+ * The playground deliberately does NOT reimplement tool logic in the browser:
+ * that drifts from the server (it already had convert_credits' schema wrong)
+ * and means the hosted demo never exercises the product.
+ */
+const BRIDGE = "/api/mcp";
+
+async function mcp(tool, args = {}) {
+  let res;
+  try {
+    res = await fetch(BRIDGE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tool, arguments: args }),
+    });
+  } catch {
+    throw new Error(
+      "Could not reach the Olex server.\nCheck your connection and try again.",
+    );
+  }
+
+  const payload = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(
+      payload?.error ?? `Server returned HTTP ${res.status}.`,
+    );
+  }
+
+  const text = (payload?.content ?? [])
+    .map((c) => c.text ?? "")
+    .join("\n")
+    .trim();
+
+  // A tool-reported failure (bad address, unknown block) arrives as a normal
+  // 200 with isError set — surface it as an error without hiding the detail.
+  if (payload?.isError) throw new Error(text || "The tool reported an error.");
+  return { text: text || "(the tool returned no output)", ms: payload?.elapsedMs };
+}
+
+/** Drop keys the user left blank so optional fields stay absent. */
+function compact(obj) {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    const s = typeof v === "string" ? v.trim() : v;
+    if (s !== "" && s !== undefined && s !== null) out[k] = s;
+  }
+  return out;
+}
+
 const TOOLS = {
   status: {
+    tool: "olex_network_status",
     fields: [],
     example: {},
-    run: async () => {
-      const b = readBlock(await api("/block/latest"));
-      return [
-        `**Aleo testnet — online**`,
-        ``,
-        `Latest block:  ${groupDigits(b.height)}`,
-        `Block hash:    ${b.hash}`,
-        `Round:         ${groupDigits(b.round)}`,
-        `Block time:    ${new Date(b.timestamp * 1000).toISOString()}`,
-        `Proof target:  ${groupDigits(b.proofTarget)}`,
-        `Transactions:  ${b.txs}`,
-      ].join("\n");
-    },
+    args: () => ({}),
   },
 
   balance: {
@@ -318,35 +360,8 @@ const TOOLS = {
       { name: "address", label: "Aleo address", placeholder: "aleo1…", note: "63 characters, starts with aleo1" },
     ],
     example: { address: SAMPLE_ADDRESS },
-    run: async ({ address }) => {
-      const addr = (address || "").trim();
-      if (!/^aleo1[023456789acdefghjklmnpqrstuvwxyz]{58}$/.test(addr)) {
-        throw new Error(
-          `"${addr.slice(0, 24)}…" is not a valid Aleo address.\nAddresses start with 'aleo1' and are 63 characters long.`,
-        );
-      }
-      const raw = await api(`/program/credits.aleo/mapping/account/${addr}`);
-      const micro = parseTypedInt(raw);
-      if (micro === null) {
-        return [
-          addr,
-          ``,
-          `Public balance: 0 credits`,
-          ``,
-          `No entry in the credits.aleo/account mapping. This address has never`,
-          `held public credits on testnet. It may still hold PRIVATE balances in`,
-          `encrypted records — those cannot be read without the view key.`,
-        ].join("\n");
-      }
-      return [
-        addr,
-        ``,
-        `Public balance: ${microToCredits(micro)} credits`,
-        `                ${groupDigits(micro)} microcredits`,
-        ``,
-        `Private record balances are not included — they are encrypted on-chain.`,
-      ].join("\n");
-    },
+    tool: "olex_get_balance",
+    args: ({ address }) => compact({ address }),
   },
 
   program: {
@@ -354,19 +369,8 @@ const TOOLS = {
       { name: "program_id", label: "Program ID", placeholder: "credits.aleo", note: "lowercase, ends in .aleo" },
     ],
     example: { program_id: "credits.aleo" },
-    run: async ({ program_id }) => {
-      const id = (program_id || "").trim();
-      if (!/^[a-z][a-z0-9_]*\.aleo$/.test(id)) {
-        throw new Error(`"${id}" is not a valid program ID.\nExample: credits.aleo`);
-      }
-      const src = await api(`/program/${id}`);
-      const text = (typeof src === "string" ? src : JSON.stringify(src, null, 2))
-        .replace(/^"|"$/g, "").replace(/\\n/g, "\n");
-      let mappings = [];
-      try { mappings = await api(`/program/${id}/mappings`); } catch { /* optional */ }
-      const head = mappings.length ? `Mappings: ${mappings.join(", ")}\n\n` : "";
-      return head + (text.length > 4000 ? `${text.slice(0, 4000)}\n\n… (truncated)` : text);
-    },
+    tool: "olex_get_program",
+    args: ({ program_id }) => compact({ program_id }),
   },
 
   mapping: {
@@ -376,15 +380,9 @@ const TOOLS = {
       { name: "key", label: "Key", placeholder: "aleo1…" },
     ],
     example: { program_id: "credits.aleo", mapping_name: "account", key: SAMPLE_ADDRESS },
-    run: async ({ program_id, mapping_name, key }) => {
-      const raw = await api(
-        `/program/${program_id.trim()}/mapping/${encodeURIComponent(mapping_name.trim())}/${encodeURIComponent(key.trim())}`,
-      );
-      const value = raw === null || String(raw) === "null"
-        ? "(no value set for this key)"
-        : String(raw).replace(/^"|"$/g, "");
-      return `${program_id} / ${mapping_name} / ${key}\n\nValue: ${value}`;
-    },
+    tool: "olex_get_mapping_value",
+    args: ({ program_id, mapping_name, key }) =>
+      compact({ program_id, mapping_name, key }),
   },
 
   block: {
@@ -392,18 +390,20 @@ const TOOLS = {
       { name: "height", label: "Block height", placeholder: "leave empty for latest", note: "optional" },
     ],
     example: {},
-    run: async ({ height }) => {
-      const h = (height || "").trim();
-      const b = readBlock(await api(h ? `/block/${h}` : "/block/latest"));
-      return [
-        `Block ${groupDigits(b.height)}`,
-        ``,
-        `Hash:         ${b.hash}`,
-        `Round:        ${groupDigits(b.round)}`,
-        `Timestamp:    ${new Date(b.timestamp * 1000).toISOString()}`,
-        `Transactions: ${b.txs}`,
-      ].join("\n");
+    tool: "olex_get_block",
+    args: ({ height }) => {
+      const h = height.trim();
+      return compact({ height: h ? Number(h) : undefined });
     },
+  },
+
+  transaction: {
+    fields: [
+      { name: "transaction_id", label: "Transaction ID", placeholder: "at1…", note: "starts with at1" },
+    ],
+    example: { transaction_id: "at1fv877phzw8hwmaguyhlar7gk364vu6ychecgnafdzv8xgaqlwqrqm9m73w" },
+    tool: "olex_get_transaction",
+    args: ({ transaction_id }) => compact({ transaction_id }),
   },
 
   convert: {
@@ -412,23 +412,8 @@ const TOOLS = {
       { name: "from", label: "From unit", type: "select", options: ["credits", "microcredits"] },
     ],
     example: { amount: "1.5", from: "credits" },
-    run: async ({ amount, from }) => {
-      const text = (amount || "").trim();
-      if (from === "credits") {
-        if (!/^-?\d+(\.\d{1,6})?$/.test(text)) {
-          throw new Error(`"${text}" is not a valid credit amount (max 6 decimal places).`);
-        }
-        const [whole = "0", frac = ""] = text.replace(/^-/, "").split(".");
-        const micro = BigInt(whole) * 1_000_000n + BigInt(frac.padEnd(6, "0"));
-        const signed = text.startsWith("-") ? -micro : micro;
-        return `${text} credits = ${groupDigits(signed)} microcredits`;
-      }
-      const clean = text.replace(/[_,]/g, "");
-      if (!/^-?\d+$/.test(clean)) {
-        throw new Error(`"${text}" is not a whole number.\nMicrocredits are indivisible.`);
-      }
-      return `${groupDigits(clean)} microcredits = ${microToCredits(BigInt(clean))} credits`;
-    },
+    tool: "olex_convert_credits",
+    args: ({ amount, from }) => compact({ amount, from }),
   },
 };
 
@@ -504,6 +489,21 @@ function readForm() {
   return out;
 }
 
+/**
+ * Render a tiny safe subset of the markdown the MCP tools emit: `**bold**`
+ * and `code`. The server output is live chain data, so everything is
+ * HTML-escaped first and only then formatted — a `**` inside an address or
+ * program source can never become a tag.
+ */
+function renderToolMarkdown(text) {
+  const esc = text.replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+  return esc
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+
 async function runTool(event) {
   event?.preventDefault();
   const out = $("play-out");
@@ -515,14 +515,15 @@ async function runTool(event) {
   timing.textContent = "";
   btn.disabled = true;
 
+  const spec = TOOLS[activeTool];
   const started = performance.now();
   try {
-    const text = await TOOLS[activeTool].run(readForm());
-    out.textContent = text;
-    timing.textContent = `${Math.round(performance.now() - started)} ms`;
+    const { text, ms } = await mcp(spec.tool, spec.args(readForm()));
+    out.innerHTML = renderToolMarkdown(text);
+    timing.textContent = `${ms ?? Math.round(performance.now() - started)} ms`;
   } catch (err) {
     out.classList.add("is-error");
-    out.textContent = `Error\n\n${err.message}`;
+    out.innerHTML = renderToolMarkdown(`Error\n\n${err.message}`);
     timing.textContent = `${Math.round(performance.now() - started)} ms`;
   } finally {
     btn.disabled = false;
@@ -538,7 +539,8 @@ function selectTool(name) {
   }
   renderFields();
   $("play-out").classList.remove("is-error");
-  $("play-out").textContent = "Press Run tool to execute against Aleo testnet.";
+  $("play-out").textContent =
+    "Press Run tool to execute this tool on the Olex MCP server.";
   $("play-timing").textContent = "";
 }
 
