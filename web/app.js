@@ -269,8 +269,10 @@ async function bootstrapFeed(tipHeight) {
 
   // History failed but the seeded tip is real. Keep the row and note the gap
   // underneath it — replacing a genuine block with a status line loses data.
+  // Don't promise a retry: the interval polls with first=false, which only
+  // prepends newer tips. Backfill runs again solely from the Refresh button.
   if (landed === 0 && feed.length === 1) {
-    appendFeedNote("Earlier blocks unavailable right now. Retrying…");
+    appendFeedNote("Earlier blocks unavailable — press Refresh to try again.");
   }
 }
 
