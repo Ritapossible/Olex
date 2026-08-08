@@ -74,8 +74,9 @@
         <a class="btn-secondary" href="#install">Install</a>
       </div>
       <p class="hero-note">
-        Reading public chain state only. Private records stay encrypted —
-        <span class="ink-2">that is the point of Aleo.</span>
+        This playground reads public chain state and analyses program privacy.
+        <span class="ink-2">Record decryption runs locally, where your view key
+        never leaves your machine.</span>
       </p>
     </div>
 
@@ -187,6 +188,18 @@
         <button class="play-tool" role="tab" aria-selected="false" data-tool="convert">
           <span class="tool-name">olex_convert_credits</span>
           <span class="tool-hint ink-3">amount · unit</span>
+        </button>
+        <button class="play-tool" role="tab" aria-selected="false" data-tool="analyze">
+          <span class="tool-name">olex_analyze_privacy</span>
+          <span class="tool-hint ink-3">program id</span>
+        </button>
+        <button class="play-tool" role="tab" aria-selected="false" data-tool="txprivacy">
+          <span class="tool-name">olex_explain_transaction_privacy</span>
+          <span class="tool-hint ink-3">transaction id</span>
+        </button>
+        <button class="play-tool" role="tab" aria-selected="false" data-tool="visibility">
+          <span class="tool-name">olex_check_visibility</span>
+          <span class="tool-hint ink-3">type annotation</span>
         </button>
       </aside>
 

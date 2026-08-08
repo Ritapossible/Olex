@@ -22,8 +22,13 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer, VERSION } from "../dist/server.js";
 
-// Read-only chain queries. Listed explicitly so a typo in the client cannot
-// probe for tools that were never meant to be reachable from the browser.
+// Read-only chain queries and key-free privacy analysis. Listed explicitly so a
+// typo in the client cannot probe for tools that were never meant to be
+// reachable from the browser.
+//
+// Note what is absent: every view-key tool. Those are not registered on this
+// surface at all (see ServerOptions in src/server.ts), so this list is the
+// second of two independent barriers rather than the only one.
 const ALLOWED_TOOLS = new Set([
   "olex_network_status",
   "olex_get_balance",
@@ -32,6 +37,9 @@ const ALLOWED_TOOLS = new Set([
   "olex_get_block",
   "olex_get_transaction",
   "olex_convert_credits",
+  "olex_analyze_privacy",
+  "olex_explain_transaction_privacy",
+  "olex_check_visibility",
 ]);
 
 /** Run one full MCP session and hand back the client, plus a closer. */
