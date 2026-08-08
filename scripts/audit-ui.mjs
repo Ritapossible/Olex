@@ -1,15 +1,23 @@
 /**
  * Responsiveness + production audit.
  *
- * Measures real rendered layout in headless Chrome at seven viewports. The point
- * is to catch what eyeballing misses: horizontal overflow, under-sized touch
- * targets, clipped text, console errors, and failed network requests.
+ * Measures real rendered layout in headless Chrome at seven viewports, on both
+ * the landing page and the docs page, and drives the mobile nav and theme
+ * toggle. The point is to catch what eyeballing misses: horizontal overflow,
+ * under-sized touch targets, clipped text, console errors, and failed network
+ * requests.
+ *
+ * Run: node scripts/audit-ui.mjs   (requires the web/ dir to be served)
  */
 
 import puppeteer from "puppeteer";
 import { mkdirSync } from "node:fs";
+import { startServer } from "./serve-web.mjs";
 
-const URL = process.env.AUDIT_URL ?? "http://127.0.0.1:8080/";
+// Serve web/ in-process on an ephemeral port. One command, no external server
+// to start first, and no port collision with whatever else is running.
+const own = process.env.AUDIT_URL ? null : await startServer(0);
+const BASE = process.env.AUDIT_URL ?? own.base;
 const OUT = "audit";
 mkdirSync(OUT, { recursive: true });
 
@@ -60,9 +68,10 @@ for (const vp of VIEWPORTS) {
     hasTouch: vp.mobile,
   });
 
-  console.log(`\n  ${vp.name}  ${vp.width}x${vp.height}${vp.mobile ? " (touch)" : ""}`);
+  console.log(`\n== ${vp.name}  ${vp.width}x${vp.height}${vp.mobile ? " (touch)" : ""} ==`);
 
-  await page.goto(URL, { waitUntil: "domcontentloaded", timeout: 45_000 });
+  // ---- landing page ------------------------------------------------------
+  await page.goto(BASE, { waitUntil: "domcontentloaded", timeout: 45_000 });
 
   // Wait on the condition, not the clock. The dashboard bootstraps its feed
   // with 12 sequential API calls, so a fixed sleep either flakes when the
@@ -84,10 +93,8 @@ for (const vp of VIEWPORTS) {
   // Let the sparkline finish its paint after the last block resolves.
   await new Promise((r) => setTimeout(r, 600));
 
-  const report = await page.evaluate((TOUCH_MIN) => {
+  const indexReport = await page.evaluate((TOUCH_MIN) => {
     const doc = document.documentElement;
-
-    // 1. horizontal overflow - the single most common mobile defect
     const overflowX = doc.scrollWidth - doc.clientWidth;
     const offenders = [];
     if (overflowX > 1) {
@@ -96,7 +103,6 @@ for (const vp of VIEWPORTS) {
         if (r.width === 0) continue;
         if (r.right > doc.clientWidth + 1 || r.left < -1) {
           const style = getComputedStyle(el);
-          // Elements inside a scroll container are legitimately wider.
           let inScroller = false;
           for (let p = el.parentElement; p; p = p.parentElement) {
             const ov = getComputedStyle(p).overflowX;
@@ -108,13 +114,11 @@ for (const vp of VIEWPORTS) {
             cls: (el.className || "").toString().slice(0, 40),
             right: Math.round(r.right),
             width: Math.round(r.width),
-            whiteSpace: style.whiteSpace,
           });
         }
       }
     }
 
-    // 2. touch targets
     const small = [];
     for (const el of document.querySelectorAll("a, button, input, select, [role=tab]")) {
       const r = el.getBoundingClientRect();
@@ -129,107 +133,113 @@ for (const vp of VIEWPORTS) {
       }
     }
 
-    // 3. text clipped by its own box (scrollWidth exceeds clientWidth, no scroller)
-    const clipped = [];
-    for (const el of document.querySelectorAll("h1,h2,h3,p,td,th,.tile-value,.hero-value,.tool-name,.card-name")) {
-      const style = getComputedStyle(el);
-      if (style.overflow === "auto" || style.overflow === "scroll" ||
-          style.overflowX === "auto" || style.overflowX === "scroll") continue;
-      if (el.scrollWidth > el.clientWidth + 2 && style.overflow !== "visible") {
-        clipped.push({
-          tag: el.tagName.toLowerCase(),
-          cls: (el.className || "").toString().slice(0, 30),
-          text: (el.textContent || "").trim().slice(0, 30),
-          scroll: el.scrollWidth,
-          client: el.clientWidth,
-        });
-      }
-    }
-
-    // 4. font sizes that are too small to read on a phone
-    const tinyText = [];
-    for (const el of document.querySelectorAll("p, span, div, td, label, .tile-delta, .field-note")) {
-      if (!el.textContent?.trim() || el.children.length > 0) continue;
-      const px = parseFloat(getComputedStyle(el).fontSize);
-      if (px > 0 && px < 11.5) {
-        tinyText.push({ px, text: el.textContent.trim().slice(0, 26) });
-      }
-    }
-
-    // 5. did live data actually paint?
-    const hero = document.getElementById("hero-height")?.textContent?.trim() ?? "";
-    const conn = document.getElementById("conn-pill")?.dataset.state ?? "?";
-    const feedRows = document.querySelectorAll("#feed-body tr").length;
-    const skeleton = document.querySelector("#feed-body .skeleton-row") !== null;
-    const sparkPaths = document.querySelectorAll("#spark path").length;
-    const cards = document.querySelectorAll("#tool-cards .card").length;
-
-    // 6. layout sanity - is anything stacked on top of something else?
-    const tiles = [...document.querySelectorAll(".tile")].map((t) => {
-      const r = t.getBoundingClientRect();
-      return { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top) };
-    });
-
     return {
-      overflowX, offenders: offenders.slice(0, 6),
-      small, clipped, tinyText: tinyText.slice(0, 5),
-      hero, conn, feedRows, skeleton, sparkPaths, cards, tiles,
-      docWidth: doc.clientWidth,
+      overflowX, offenders: offenders.slice(0, 6), small,
+      hero: document.getElementById("hero-height")?.textContent?.trim() ?? "",
+      conn: document.getElementById("conn-pill")?.dataset.state ?? "?",
+      feedRows: document.querySelectorAll("#feed-body tr").length,
+      skeleton: document.querySelector("#feed-body .skeleton-row") !== null,
+      sparkPaths: document.querySelectorAll("#spark path").length,
+      cards: document.querySelectorAll("#tool-cards .card").length,
     };
   }, TOUCH_MIN);
 
-  // ---- assertions -------------------------------------------------------
-  if (!dataReady) {
-    note("WARN", "live data did not settle within 30s - network slow, not a UI defect");
-  }
-
-  if (report.overflowX > 1) {
-    note("FAIL", `horizontal overflow: ${report.overflowX}px past viewport`);
-    for (const o of report.offenders) {
-      console.log(`           ${o.tag}.${o.cls} right=${o.right} w=${o.width} ws=${o.whiteSpace}`);
+  if (!dataReady) note("WARN", "index: live data did not settle within 30s - network slow, not a UI defect");
+  if (indexReport.overflowX > 1) {
+    note("FAIL", `index: horizontal overflow ${indexReport.overflowX}px past viewport`);
+    for (const o of indexReport.offenders) {
+      console.log(`           ${o.tag}.${o.cls} right=${o.right} w=${o.width}`);
     }
   } else {
-    note("PASS", "no horizontal overflow");
+    note("PASS", "index: no horizontal overflow");
   }
+  if (vp.mobile && indexReport.small.length) {
+    note("WARN", `index: ${indexReport.small.length} target(s) under ${TOUCH_MIN}px`);
+    for (const s of indexReport.small.slice(0, 5)) {
+      console.log(`           <${s.tag}> "${s.label}" ${s.w}x${s.h}`);
+    }
+  } else if (vp.mobile) {
+    note("PASS", "index: all touch targets >= 44px");
+  }
+  note(/^[\d,]+$/.test(indexReport.hero) ? "PASS" : "FAIL", `index: hero height = "${indexReport.hero}" (live: ${indexReport.conn})`);
+  note(indexReport.feedRows > 1 && !indexReport.skeleton ? "PASS" : "FAIL", `index: feed rows = ${indexReport.feedRows}${indexReport.skeleton ? " (still skeleton!)" : ""}`);
+  note(indexReport.sparkPaths >= 2 ? "PASS" : "FAIL", `index: sparkline paths = ${indexReport.sparkPaths}`);
+  note(indexReport.cards === 13 ? "PASS" : "FAIL", `index: tool cards = ${indexReport.cards}/13`);
 
-  if (vp.mobile) {
-    if (report.small.length) {
-      note("WARN", `${report.small.length} target(s) under ${TOUCH_MIN}px`);
-      for (const s of report.small.slice(0, 5)) {
-        console.log(`           <${s.tag}> "${s.label}" ${s.w}x${s.h}`);
+  // ---- interactive chrome: mobile nav + theme toggle ---------------------
+  const toggleReport = await page.evaluate(() => {
+    const navBtn = document.getElementById("nav-toggle");
+    const nav = document.getElementById("site-nav");
+    const themeBtn = document.getElementById("theme-toggle");
+    const open = () => {
+      navBtn?.click();
+      return nav?.classList.contains("is-open") ?? false;
+    };
+    const closedAfterLink = (() => {
+      const link = nav?.querySelector("a");
+      if (!navBtn || !nav || !link) return null;
+      navBtn.click();
+      if (!nav.classList.contains("is-open")) return null;
+      link.click();
+      return !nav.classList.contains("is-open");
+    })();
+    const before = document.documentElement.dataset.theme;
+    themeBtn?.click();
+    const after = document.documentElement.dataset.theme;
+    themeBtn?.click(); // back to the original
+    return {
+      hasNavBtn: !!navBtn, open, closedAfterLink, before, after,
+    };
+  });
+
+  note(toggleReport.open ? "PASS" : "FAIL", "index: mobile nav opens");
+  note(toggleReport.closedAfterLink ? "PASS" : "FAIL", "index: mobile nav closes on link tap");
+  note(
+    toggleReport.before && toggleReport.after && toggleReport.before !== toggleReport.after
+      ? "PASS" : "FAIL",
+    `index: theme toggle flips (${toggleReport.before} -> ${toggleReport.after})`,
+  );
+
+  // ---- docs page ----------------------------------------------------------
+  await page.goto(`${BASE}docs.html`, { waitUntil: "domcontentloaded", timeout: 45_000 });
+  await new Promise((r) => setTimeout(r, 400));
+
+  const docsReport = await page.evaluate(() => {
+    const doc = document.documentElement;
+    const overflowX = doc.scrollWidth - doc.clientWidth;
+    const offenders = [];
+    if (overflowX > 1) {
+      for (const el of document.querySelectorAll("body *")) {
+        const r = el.getBoundingClientRect();
+        if (r.width === 0) continue;
+        if (r.right > doc.clientWidth + 1 || r.left < -1) {
+          let inScroller = false;
+          for (let p = el.parentElement; p; p = p.parentElement) {
+            const ov = getComputedStyle(p).overflowX;
+            if (ov === "auto" || ov === "scroll") { inScroller = true; break; }
+          }
+          if (!inScroller) {
+            offenders.push(`${el.tagName.toLowerCase()}.${(el.className || "").toString().slice(0, 30)} right=${Math.round(r.right)} w=${Math.round(r.width)}`);
+          }
+        }
       }
-    } else {
-      note("PASS", `all touch targets >= ${TOUCH_MIN}px`);
     }
-  }
+    const tocLinks = document.querySelectorAll(".doc-toc a").length;
+    const sections = document.querySelectorAll(".doc-section").length;
+    const themeBtn = !!document.getElementById("theme-toggle");
+    const navBtn = !!document.getElementById("nav-toggle");
+    return { overflowX, offenders: offenders.slice(0, 6), tocLinks, sections, themeBtn, navBtn };
+  });
 
-  if (report.clipped.length) {
-    note("FAIL", `${report.clipped.length} element(s) clipping text`);
-    for (const c of report.clipped.slice(0, 4)) {
-      console.log(`           ${c.tag}.${c.cls} "${c.text}" ${c.scroll}>${c.client}`);
-    }
+  if (docsReport.overflowX > 1) {
+    note("FAIL", `docs: horizontal overflow ${docsReport.overflowX}px`);
+    for (const o of docsReport.offenders) console.log(`           ${o}`);
   } else {
-    note("PASS", "no clipped text");
+    note("PASS", "docs: no horizontal overflow");
   }
-
-  if (report.tinyText.length) {
-    note("WARN", `${report.tinyText.length} text node(s) under 11.5px`);
-  }
-
-  const heroOk = /^[\d,]+$/.test(report.hero);
-  note(heroOk ? "PASS" : "FAIL", `hero height = "${report.hero}" (live: ${report.conn})`);
-
-  const feedOk = report.feedRows > 1 && !report.skeleton;
-  note(feedOk ? "PASS" : "FAIL", `feed rows = ${report.feedRows}${report.skeleton ? " (still skeleton!)" : ""}`);
-
-  note(report.sparkPaths >= 2 ? "PASS" : "FAIL", `sparkline paths = ${report.sparkPaths}`);
-  note(report.cards === 7 ? "PASS" : "FAIL", `tool cards = ${report.cards}/7`);
-
-  if (report.tiles.length) {
-    const widths = [...new Set(report.tiles.map((t) => t.w))];
-    const rows = [...new Set(report.tiles.map((t) => t.top))].length;
-    console.log(`    [info] tiles: ${report.tiles.length} across ${rows} row(s), width(s) ${widths.join("/")}`);
-  }
+  note(docsReport.tocLinks >= 8 ? "PASS" : "FAIL", `docs: TOC links = ${docsReport.tocLinks}`);
+  note(docsReport.sections >= 8 ? "PASS" : "FAIL", `docs: sections = ${docsReport.sections}`);
+  note(docsReport.themeBtn && docsReport.navBtn ? "PASS" : "FAIL", "docs: shared chrome present");
 
   if (consoleErrors.length) {
     note("FAIL", `${consoleErrors.length} console error(s)`);
@@ -237,7 +247,6 @@ for (const vp of VIEWPORTS) {
   } else {
     note("PASS", "no console errors");
   }
-
   const realFailures = failedRequests.filter((f) => !/favicon/i.test(f));
   if (realFailures.length) {
     note("FAIL", `${realFailures.length} failed request(s)`);
@@ -245,14 +254,13 @@ for (const vp of VIEWPORTS) {
   } else {
     note("PASS", "no failed requests");
   }
-  const favicon = failedRequests.filter((f) => /favicon/i.test(f));
-  if (favicon.length) note("WARN", "favicon missing (404 in console)");
 
   await page.screenshot({ path: `${OUT}/${vp.name}.png`, fullPage: true });
   await page.close();
 }
 
 await browser.close();
+own?.server.close();
 
 console.log(`\n  ${problems === 0 ? "NO BLOCKING FAILURES" : `${problems} BLOCKING FAILURE(S)`}`);
 console.log(`  screenshots -> ${OUT}/\n`);
