@@ -17,7 +17,7 @@
       ]
     },
     {
-      "source": "/(app.js|styles.css)",
+      "source": "/(app.js|docs.js|theme.js|styles.css)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]

@@ -1,10 +1,12 @@
 /**
  * Olex dashboard.
  *
- * Talks to the public Aleo API directly from the browser — verified to send
+ * Talks to the public Aleo API directly from the browser - verified to send
  * Access-Control-Allow-Origin: *, so no proxy or backend is involved. Every
  * number on this page is live chain data; nothing here is seeded or faked.
  */
+
+import { initTheme, initMobileNav } from "./theme.js";
 
 const API = "https://api.explorer.provable.com/v1/testnet";
 const EXPLORER = "https://testnet.aleoscan.io";
@@ -22,7 +24,7 @@ async function api(path, { timeout = 12_000 } = {}) {
   try {
     const res = await fetch(`${API}${path}`, { signal: ctrl.signal });
     const text = await res.text();
-    if (!res.ok) throw new Error(`${res.status} — ${text.slice(0, 160)}`);
+    if (!res.ok) throw new Error(`${res.status} - ${text.slice(0, 160)}`);
     try { return JSON.parse(text); } catch { return text; }
   } finally {
     clearTimeout(timer);
@@ -62,10 +64,13 @@ function setConn(state, label) {
   const pill = $("conn-pill");
   pill.dataset.state = state;
   $("conn-label").textContent = label;
+  // On a narrow screen the pill collapses to a bare dot, so the text is no
+  // longer readable. Mirror it into the accessible name, which stays.
+  pill.setAttribute("aria-label", `Connection: ${label}`);
 }
 
 /* ── sparkline: seconds between blocks, single series ─────────────────── */
-/* One series, so no legend box — the caption names it. Hover shows values,
+/* One series, so no legend box - the caption names it. Hover shows values,
    which is why only the endpoint carries a direct label.
    Plotting block interval rather than transaction count: testnet blocks are
    usually empty, so a tx series is a flat zero line that reads as a broken
@@ -135,7 +140,7 @@ function renderSpark(blocks) {
   dot.setAttribute("stroke-width", "2");
   svg.appendChild(dot);
 
-  // hover layer — invisible wide hit bands, tooltip via native title
+  // hover layer - invisible wide hit bands, tooltip via native title
   points.forEach((v, i) => {
     const hit = document.createElementNS(SVG_NS, "rect");
     const bandW = (W - PAD * 2) / points.length;
@@ -185,7 +190,7 @@ function paintFeed(newHeights = new Set()) {
 
     const hash = document.createElement("td");
     hash.className = "hash";
-    hash.textContent = b.hash ? `${b.hash.slice(0, 14)}…${b.hash.slice(-6)}` : "—";
+    hash.textContent = b.hash ? `${b.hash.slice(0, 14)}...${b.hash.slice(-6)}` : "-";
 
     tr.append(h, t, x, hash);
     body.appendChild(tr);
@@ -210,7 +215,7 @@ function paintStats(b) {
   $("stat-round").textContent = groupDigits(b.round);
   $("stat-round-sub").textContent = `block ${groupDigits(b.height)}`;
   $("stat-txs").textContent = b.txs;
-  $("stat-proof").textContent = b.proofTarget ? groupDigits(b.proofTarget) : "—";
+  $("stat-proof").textContent = b.proofTarget ? groupDigits(b.proofTarget) : "-";
 
   // Average over the feed, not the gap between the last two polls: polling is
   // slower than block production, so a poll-to-poll delta overstates the
@@ -221,7 +226,7 @@ function paintStats(b) {
     $("stat-time").textContent = `${mean.toFixed(1)}s`;
     $("stat-time-sub").textContent = `mean of last ${intervals.length} blocks`;
   } else {
-    $("stat-time").textContent = "—";
+    $("stat-time").textContent = "-";
     $("stat-time-sub").textContent = clockTime(b.timestamp);
   }
 }
@@ -231,7 +236,7 @@ function paintStats(b) {
  *
  * Each block is painted the moment it lands rather than after all twelve
  * settle: the previous Promise.all meant one slow request held the whole table
- * on "Loading blocks…", and a total failure left that message up forever with
+ * on "Loading blocks...", and a total failure left that message up forever with
  * nothing retrying behind it. Now the tip row is already on screen from the
  * caller, rows fill in progressively, and a wholesale failure reports itself.
  */
@@ -263,16 +268,16 @@ async function bootstrapFeed(tipHeight) {
   // Nothing arrived and the caller had no tip to seed: say so instead of
   // leaving a skeleton row that reads as a hung page.
   if (!feed.length) {
-    showFeedMessage("Could not load recent blocks. Retrying…");
+    showFeedMessage("Could not load recent blocks. Retrying...");
     return;
   }
 
   // History failed but the seeded tip is real. Keep the row and note the gap
-  // underneath it — replacing a genuine block with a status line loses data.
+  // underneath it - replacing a genuine block with a status line loses data.
   // Don't promise a retry: the interval polls with first=false, which only
   // prepends newer tips. Backfill runs again solely from the Refresh button.
   if (landed === 0 && feed.length === 1) {
-    appendFeedNote("Earlier blocks unavailable — press Refresh to try again.");
+    appendFeedNote("Earlier blocks unavailable - press Refresh to try again.");
   }
 }
 
@@ -337,7 +342,7 @@ async function tick(first = false) {
     setConn("error", "Connection lost");
     // A failed poll must not leave the table claiming it is still loading.
     if (!feed.length) {
-      showFeedMessage("Could not reach the Aleo API. Retrying automatically…");
+      showFeedMessage("Could not reach the Aleo API. Retrying automatically...");
       $("hero-status").textContent = "network unreachable";
     }
     console.error("[olex] poll failed:", err);
@@ -386,7 +391,7 @@ async function mcp(tool, args = {}) {
     .trim();
 
   // A tool-reported failure (bad address, unknown block) arrives as a normal
-  // 200 with isError set — surface it as an error without hiding the detail.
+  // 200 with isError set - surface it as an error without hiding the detail.
   if (payload?.isError) throw new Error(text || "The tool reported an error.");
   return { text: text || "(the tool returned no output)", ms: payload?.elapsedMs };
 }
@@ -411,7 +416,7 @@ const TOOLS = {
 
   balance: {
     fields: [
-      { name: "address", label: "Aleo address", placeholder: "aleo1…", note: "63 characters, starts with aleo1" },
+      { name: "address", label: "Aleo address", placeholder: "aleo1...", note: "63 characters, starts with aleo1" },
     ],
     example: { address: SAMPLE_ADDRESS },
     tool: "olex_get_balance",
@@ -431,7 +436,7 @@ const TOOLS = {
     fields: [
       { name: "program_id", label: "Program ID", placeholder: "credits.aleo" },
       { name: "mapping_name", label: "Mapping", placeholder: "account" },
-      { name: "key", label: "Key", placeholder: "aleo1…" },
+      { name: "key", label: "Key", placeholder: "aleo1..." },
     ],
     example: { program_id: "credits.aleo", mapping_name: "account", key: SAMPLE_ADDRESS },
     tool: "olex_get_mapping_value",
@@ -460,7 +465,7 @@ const TOOLS = {
 
   transaction: {
     fields: [
-      { name: "transaction_id", label: "Transaction ID", placeholder: "at1…", note: "starts with at1" },
+      { name: "transaction_id", label: "Transaction ID", placeholder: "at1...", note: "starts with at1" },
     ],
     example: { transaction_id: "at1fv877phzw8hwmaguyhlar7gk364vu6ychecgnafdzv8xgaqlwqrqm9m73w" },
     tool: "olex_get_transaction",
@@ -493,7 +498,7 @@ const TOOLS = {
 
   txprivacy: {
     fields: [
-      { name: "transaction_id", label: "Transaction ID", placeholder: "at1…", note: "starts with at1" },
+      { name: "transaction_id", label: "Transaction ID", placeholder: "at1...", note: "starts with at1" },
     ],
     example: { transaction_id: "at1fv877phzw8hwmaguyhlar7gk364vu6ychecgnafdzv8xgaqlwqrqm9m73w" },
     tool: "olex_explain_transaction_privacy",
@@ -514,14 +519,14 @@ const CATALOG = [
   ["olex_network_status", "Latest height, hash, round, timestamp and proof target for the network.", "read"],
   ["olex_get_balance", "Public credits balance for an address, read from the credits.aleo account mapping.", "read"],
   ["olex_get_program", "Deployed Aleo instruction source for any program ID, plus its mappings.", "read"],
-  ["olex_get_mapping_value", "A single key from any program's on-chain mapping — Aleo's public storage.", "read"],
+  ["olex_get_mapping_value", "A single key from any program's on-chain mapping - Aleo's public storage.", "read"],
   ["olex_get_block", "Any block by height, or the chain tip, with its transaction list.", "read"],
   ["olex_get_transaction", "A transaction by ID, with its transitions and how many inputs were private.", "read"],
   ["olex_convert_credits", "Exact bigint conversion between credits and microcredits.", "util"],
   ["olex_analyze_privacy", "Static analysis of where a program's private/public boundary really falls, including private inputs that leak into public mapping state.", "read"],
   ["olex_explain_transaction_privacy", "Value by value, what a real transaction exposed on-chain and what stayed encrypted.", "read"],
   ["olex_check_visibility", "What a type annotation like u64.private or credits.aleo/transfer_public.future actually means.", "util"],
-  ["olex_decrypt_record", "Decrypt a record ciphertext with your view key — the one thing no block explorer can do. Local stdio only.", "key"],
+  ["olex_decrypt_record", "Decrypt a record ciphertext with your view key - the one thing no block explorer can do. Local stdio only.", "key"],
   ["olex_true_balance", "Your real balance: public credits plus the private records you own. Local stdio only.", "key"],
   ["olex_view_key_address", "Confirm a view key is valid and show which account it unlocks. Local stdio only.", "key"],
 ];
@@ -592,7 +597,7 @@ function readForm() {
  * Name the empty required fields, or return "" when the form is complete.
  *
  * Without this, `compact` strips a blank value and the key never reaches the
- * server, so Zod answers "Required at amount" as a raw -32602 — a protocol
+ * server, so Zod answers "Required at amount" as a raw -32602 - a protocol
  * error where the user only forgot to type something. Every field is required
  * unless the spec marks it optional, so a new field fails safe.
  */
@@ -610,7 +615,7 @@ function missingRequired(spec, values) {
 /**
  * Render a tiny safe subset of the markdown the MCP tools emit: `**bold**`
  * and `code`. The server output is live chain data, so everything is
- * HTML-escaped first and only then formatted — a `**` inside an address or
+ * HTML-escaped first and only then formatted - a `**` inside an address or
  * program source can never become a tag.
  */
 function renderToolMarkdown(text) {
@@ -629,7 +634,7 @@ async function runTool(event) {
   const btn = $("play-run");
 
   out.classList.remove("is-error");
-  out.textContent = "Running…";
+  out.textContent = "Running...";
   timing.textContent = "";
   btn.disabled = true;
 
@@ -703,31 +708,15 @@ function renderCatalog() {
   }
 }
 
-/* ── theme toggle ─────────────────────────────────────────────────────── */
-
-function initTheme() {
-  // localStorage throws in Safari private mode and in sandboxed iframes;
-  // the theme is a nicety and must never take the page down with it.
-  let saved = null;
-  try { saved = localStorage.getItem("olex-theme"); } catch { /* ignore */ }
-  if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
-
-  $("theme-toggle").addEventListener("click", () => {
-    const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
-    document.documentElement.dataset.theme = next;
-    try { localStorage.setItem("olex-theme", next); } catch { /* ignore */ }
-    $("theme-toggle").setAttribute(
-      "aria-label",
-      next === "light" ? "Switch to dark mode" : "Switch to light mode",
-    );
-    if (feed.length) renderSpark([...feed].reverse());
-  });
-}
-
 /* ── boot ─────────────────────────────────────────────────────────────── */
 
 function boot() {
-  initTheme();
+  // The sparkline is drawn with resolved theme colours, so it has to be
+  // repainted when the theme changes - CSS alone cannot recolour it.
+  initTheme(() => {
+    if (feed.length) renderSpark([...feed].reverse());
+  });
+  initMobileNav();
   renderCatalog();
   renderFields();
 

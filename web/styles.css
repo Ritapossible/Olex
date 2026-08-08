@@ -1,5 +1,5 @@
 /* ============================================================================
-   Olex — design tokens
+   Olex - design tokens
    Palette values come from the validated reference instance. The three series
    hues (blue / orange / aqua) passed all-pairs CVD + normal-vision checks
    against this surface; a fourth slot (yellow) failed beside orange, so the
@@ -175,9 +175,36 @@ a { color: inherit; }
 }
 .btn-ghost:hover { background: var(--surface-3); color: var(--text-primary); border-color: var(--border-strong); }
 
+/* Icon-only controls are square by construction rather than by padding a glyph
+   out to size. The theme toggle used to reach 44px as a 16px mark centred in a
+   box built for text, which on a phone read as a large empty tile. */
+.icon-btn {
+  display: inline-grid; place-items: center;
+  width: 40px; height: 40px; padding: 0; flex: none;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text-secondary);
+  font: inherit; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.icon-btn:hover {
+  background: var(--surface-3); color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.icon-btn svg { width: 20px; height: 20px; display: block; }
+.icon-btn[aria-pressed="true"] { color: var(--text-primary); }
+
+/* Only rendered where the inline nav cannot fit; see the 960px breakpoint. */
+#nav-toggle { display: none; }
+#nav-toggle .bar-close { display: none; }
+#nav-toggle.is-open .bar-open { display: none; }
+#nav-toggle.is-open .bar-close { display: block; }
+
 /* On touch devices every control clears the 44px recommendation. */
 @media (pointer: coarse) {
-  .btn-ghost { min-height: 44px; min-width: 44px; padding-inline: 14px; }
+  .btn-ghost { min-height: 44px; padding-inline: 14px; }
+  .icon-btn { width: 44px; height: 44px; }
 }
 
 /* ============================================================================
@@ -223,7 +250,7 @@ a { color: inherit; }
 
 .hero-note { margin-top: 22px; font-size: 13.5px; color: var(--text-muted); }
 
-/* hero figure — exactly one per view */
+/* hero figure - exactly one per view */
 .hero-figure {
   margin: 0; padding: 26px;
   background: var(--surface-1);
@@ -240,7 +267,7 @@ a { color: inherit; }
 .hero-value {
   font-size: clamp(44px, 5.4vw, 60px);
   font-weight: 650; letter-spacing: -0.035em; line-height: 1;
-  /* proportional figures, per the figure spec — tabular is for columns */
+  /* proportional figures, per the figure spec - tabular is for columns */
 }
 
 .hero-sub { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13.5px; }
@@ -351,7 +378,7 @@ a { color: inherit; }
 .play-tool.is-active {
   background: var(--surface-3); color: var(--text-primary);
 }
-/* An active marker that survives a monochrome print or CVD — position, not hue. */
+/* An active marker that survives a monochrome print or CVD - position, not hue. */
 .play-tool.is-active::before {
   content: ""; position: absolute; left: 0; top: 8px; bottom: 8px;
   width: 2px; border-radius: 2px; background: var(--series-1);
@@ -412,7 +439,7 @@ a { color: inherit; }
 .play-pre strong { color: var(--text-primary); font-weight: 600; }
 .play-pre.is-error { color: color-mix(in srgb, var(--critical) 80%, var(--text-primary)); }
 
-/* status line with icon + label — status never carried by color alone */
+/* status line with icon + label - status never carried by color alone */
 .status-line { display: flex; align-items: center; gap: 8px; font-family: var(--font); font-size: 13.5px; }
 
 /* ============================================================================
@@ -459,7 +486,7 @@ a { color: inherit; }
   text-transform: uppercase; letter-spacing: .05em;
 }
 /* Wrap instead of scroll. These are commands to copy, and a horizontal
-   scroller hid the tail of the longest one ("…/dist/i") with no affordance
+   scroller hid the tail of the longest one (".../dist/i") with no affordance
    that anything was cut. */
 .code { margin: 0; padding: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .code code { font-family: var(--mono); font-size: 12.5px; line-height: 1.7; color: var(--text-secondary); }
@@ -492,11 +519,39 @@ a { color: inherit; }
   }
   .play-tool { min-height: 44px; }
   .play-tool .tool-name { font-size: 12px; overflow-wrap: anywhere; }
-  .nav { display: none; }
+
+  #nav-toggle { display: inline-grid; }
+  .topbar-right { margin-left: auto; }
+
+  /* The nav collapses into a panel rather than disappearing. It used to be
+     display:none here, which left every section on the page unreachable from a
+     phone. Positioned against .topbar (sticky, so it is the containing block)
+     so the panel spans the full width instead of the centred wrap. */
+  .nav {
+    position: absolute; top: 100%; left: 0; right: 0;
+    display: none; flex-direction: column; gap: 2px;
+    margin: 0; padding: 8px;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .nav.is-open { display: flex; }
+  .nav a { padding: 12px 14px; font-size: 15px; }
+}
+
+/* Below this the bar runs out of room for brand + status + two controls, so the
+   pill keeps its dot and drops its text. setConn mirrors the label into
+   aria-label, so the state stays available to a screen reader either way. */
+@media (max-width: 480px) {
+  .conn {
+    width: 36px; height: 36px; min-height: 36px;
+    padding: 0; justify-content: center;
+  }
+  .conn #conn-label { display: none; }
 }
 
 @media (max-width: 560px) {
-  /* Two tiles per row, not one — one column made the page needlessly long. */
+  /* Two tiles per row, not one - one column made the page needlessly long. */
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .tile { padding: 14px; }
   .tile-value { font-size: 21px; }
@@ -522,7 +577,7 @@ a { color: inherit; }
   .footer-inner { flex-direction: column; gap: 6px; }
 }
 
-/* Long unbroken strings — addresses, hashes, program source — must wrap or
+/* Long unbroken strings - addresses, hashes, program source - must wrap or
    scroll inside their own box, never widen the page. */
 .play-pre, .code, .hash { overflow-wrap: anywhere; }
 .code { -webkit-overflow-scrolling: touch; }
@@ -560,4 +615,167 @@ a { color: inherit; }
   .play-tool { min-height: 48px; justify-content: center; }
 
   .conn { min-height: 36px; }
+}
+
+/* ============================================================================
+   docs page
+   ========================================================================= */
+
+.doc-hero { padding-block: 56px 32px; border-bottom: 1px solid var(--border); }
+.doc-hero h1 {
+  font-size: clamp(30px, 4vw, 42px); margin-bottom: 14px; text-wrap: balance;
+}
+.doc-hero .lede { max-width: 62ch; }
+
+.doc-meta {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px;
+}
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  font-size: 12.5px; font-weight: 500; color: var(--text-secondary);
+}
+.badge code { font-family: var(--mono); font-size: 12px; color: var(--text-primary); }
+
+.doc-shell {
+  display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 48px;
+  align-items: start; padding-block: 44px 72px;
+}
+
+/* Sticky so the reader never loses their place in a long reference. */
+.doc-toc {
+  position: sticky; top: 88px;
+  max-height: calc(100vh - 120px); overflow-y: auto;
+}
+.doc-toc-title {
+  font-size: 11.5px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text-muted); margin-bottom: 10px;
+}
+.doc-toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.doc-toc a {
+  display: block; padding: 7px 12px; border-radius: var(--radius-sm);
+  border-left: 2px solid transparent;
+  color: var(--text-secondary); text-decoration: none;
+  font-size: 13.5px; line-height: 1.4;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.doc-toc a:hover { background: var(--surface-3); color: var(--text-primary); }
+/* Position and weight, not hue alone, so the marker survives CVD and print. */
+.doc-toc a.is-current {
+  background: var(--surface-3); color: var(--text-primary);
+  border-left-color: var(--series-1); font-weight: 600;
+}
+
+.doc-body { min-width: 0; max-width: 74ch; }
+.doc-section { scroll-margin-top: 92px; }
+.doc-section + .doc-section { margin-top: 52px; }
+.doc-section > h2 {
+  font-size: 24px; letter-spacing: -0.02em;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+.doc-section h3 {
+  font-size: 16px; margin-top: 30px; margin-bottom: 10px;
+  font-family: var(--mono); font-weight: 600; letter-spacing: 0;
+}
+.doc-body p { margin-bottom: 14px; color: var(--text-secondary); font-size: 15px; }
+.doc-body p strong { color: var(--text-primary); font-weight: 600; }
+.doc-body > .doc-section > p:last-child { margin-bottom: 0; }
+
+.doc-body ul { margin: 0 0 16px; padding-left: 22px; }
+.doc-body li { color: var(--text-secondary); font-size: 15px; margin-bottom: 7px; }
+.doc-body li strong { color: var(--text-primary); font-weight: 600; }
+
+.doc-body code {
+  font-family: var(--mono); font-size: 13px;
+  padding: 1.5px 5px; border-radius: 4px;
+  background: var(--surface-3); color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.doc-body a:not(.badge) {
+  color: var(--series-1); text-decoration: underline;
+  text-underline-offset: 2px; text-decoration-thickness: 1px;
+}
+
+/* Reference tables scroll inside their own box, never widening the page. */
+.doc-table-wrap {
+  overflow-x: auto; margin-bottom: 18px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-1);
+}
+.doc-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.doc-table th {
+  text-align: left; font-weight: 500; font-size: 11.5px;
+  text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);
+  padding: 11px 16px; border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.doc-table td {
+  padding: 12px 16px; border-bottom: 1px solid var(--grid);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tbody tr:last-child td { border-bottom: none; }
+.doc-table td:first-child { white-space: nowrap; }
+.doc-table td code { white-space: nowrap; }
+
+/* A callout carries an icon and a heading, so the meaning never rests on the
+   left border's hue alone. */
+.callout {
+  display: grid; grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px; align-items: start;
+  padding: 15px 17px; margin-bottom: 18px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-muted);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+}
+.callout svg { width: 20px; height: 20px; margin-top: 1px; color: var(--text-muted); }
+.callout-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.callout p { margin: 0; font-size: 14px; }
+.callout p + p { margin-top: 8px; }
+.callout.is-warn { border-left-color: var(--warning); }
+.callout.is-warn svg { color: var(--warning); }
+.callout.is-key { border-left-color: var(--series-2); }
+.callout.is-key svg { color: var(--series-2); }
+
+/* Steps are numbered by counter so inserting one never renumbers by hand. */
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.steps > li {
+  position: relative; counter-increment: step;
+  padding-left: 40px; margin-bottom: 24px;
+}
+.steps > li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: 0;
+  display: grid; place-items: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--surface-3); border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 12.5px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.step-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+
+.doc-body .code-card { margin-bottom: 14px; }
+.doc-body .code-card:last-child { margin-bottom: 0; }
+
+@media (max-width: 960px) {
+  .doc-shell { grid-template-columns: 1fr; gap: 28px; padding-block: 32px 56px; }
+  /* Sticky is wrong once it is a full-width block at the top of the flow. */
+  .doc-toc {
+    position: static; max-height: none;
+    padding: 12px; border: 1px solid var(--border);
+    border-radius: var(--radius); background: var(--surface-1);
+  }
+  .doc-toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)); display: grid; }
+}
+
+@media (max-width: 560px) {
+  .doc-hero { padding-block: 36px 26px; }
+  .doc-shell { padding-block: 26px 44px; }
+  .doc-section + .doc-section { margin-top: 40px; }
+  .doc-section > h2 { font-size: 21px; }
+  .doc-toc ol { grid-template-columns: 1fr; }
+  .doc-body p, .doc-body li { font-size: 14.5px; }
+  .steps > li { padding-left: 34px; }
+  .steps > li::before { width: 23px; height: 23px; font-size: 12px; }
 }

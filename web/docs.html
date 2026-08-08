@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Olex docs - MCP server for Aleo</title>
+<meta name="description" content="Documentation for Olex, an MCP server for the Aleo privacy blockchain: install, configuration, the full tool reference, prompts and the view-key security boundary." />
+
+<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)" />
+
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Olex docs - MCP server for Aleo" />
+<meta property="og:description" content="Install, configuration, tool reference and the view-key security boundary." />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d0d0d'/%3E%3Cpath d='M16 5 5 25h5.2L16 14.2 21.8 25H27L16 5Z' fill='%233987e5'/%3E%3Ccircle cx='16' cy='26.5' r='2.6' fill='%23199e70'/%3E%3C/svg%3E" />
+
+<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+          <path d="M16 3 4 24h5.6L16 12.4 22.4 24H28L16 3Z" fill="var(--series-1)"/>
+          <circle cx="16" cy="26" r="3" fill="var(--series-3)"/>
+        </svg>
+      </span>
+      <span class="brand-text">Olex</span>
+    </a>
+
+    <nav class="nav" id="site-nav" aria-label="Sections">
+      <a href="./#live">Live network</a>
+      <a href="./#playground">Playground</a>
+      <a href="./#tools">Tools</a>
+      <a href="#install">Install</a>
+      <a href="#tools-reference">Reference</a>
+    </nav>
+
+    <div class="topbar-right">
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="nav-toggle" type="button" aria-label="Open menu"
+              aria-expanded="false" aria-controls="site-nav">
+        <svg class="bar-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M3 6h18M3 12h18M3 18h18"/>
+        </svg>
+        <svg class="bar-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M5 5l14 14M19 5L5 19"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="doc-hero wrap">
+    <p class="eyebrow">Documentation</p>
+    <h1>Olex</h1>
+    <p class="lede">
+      An MCP server that gives AI assistants first-class access to the Aleo
+      privacy blockchain. Read chain state, analyse where a program's
+      private/public boundary actually falls, and decrypt your own records
+      locally with a view key.
+    </p>
+    <div class="doc-meta">
+      <span class="badge">Version <code>0.1.0</code></span>
+      <span class="badge">13 tools</span>
+      <span class="badge">3 prompts</span>
+      <span class="badge">Default network <code>testnet</code></span>
+    </div>
+  </section>
+
+  <div class="wrap doc-shell">
+
+    <nav class="doc-toc" aria-label="On this page">
+      <div class="doc-toc-title">On this page</div>
+      <ol>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#install">Install</a></li>
+        <li><a href="#configuration">Configuration</a></li>
+        <li><a href="#privacy-model">Privacy model</a></li>
+        <li><a href="#tools-reference">Tool reference</a></li>
+        <li><a href="#view-key-tools">View-key tools</a></li>
+        <li><a href="#prompts">Prompts</a></li>
+        <li><a href="#surfaces">Surfaces</a></li>
+        <li><a href="#verify">Verify</a></li>
+      </ol>
+    </nav>
+
+    <div class="doc-body">
+      <section class="doc-section" id="overview">
+        <h2>Overview</h2>
+        <p>
+          Olex speaks the <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">Model
+          Context Protocol</a> over stdio. Your client launches it as a child process
+          and talks JSON-RPC over stdin and stdout, so there is no port to open and
+          no service to host.
+        </p>
+        <p>
+          Ask your assistant <em>"what's the latest Aleo block height?"</em> or
+          <em>"does credits.aleo leak the transfer amount?"</em> and it calls the
+          tools below directly instead of you switching to a terminal.
+        </p>
+        <ul>
+          <li><strong>Read-only by default.</strong> The chain tools hold no keys and sign nothing, so an agent cannot move funds with them.</li>
+          <li><strong>Privacy analysis needs no keys at all.</strong> It is static analysis of deployed Aleo instructions.</li>
+          <li><strong>View-key tools are local only.</strong> They are never registered on the hosted surface. See <a href="#surfaces">Surfaces</a>.</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="install">
+        <h2>Install</h2>
+        <ol class="steps">
+          <li>
+            <div class="step-title">Build</div>
+            <div class="code-card">
+              <pre class="code"><code>git clone &lt;your-repo&gt; olex
+cd olex
+npm install
+npm run build</code></pre>
+            </div>
+          </li>
+          <li>
+            <div class="step-title">Register with Claude Code</div>
+            <div class="code-card">
+              <pre class="code"><code>claude mcp add olex -- node /abs/path/olex/dist/index.js</code></pre>
+            </div>
+            <p>Or add it to any MCP client config by hand:</p>
+            <div class="code-card">
+              <pre class="code"><code>{
+  "mcpServers": {
+    "olex": {
+      "command": "node",
+      "args": ["/abs/path/olex/dist/index.js"]
+    }
+  }
+}</code></pre>
+            </div>
+          </li>
+          <li>
+            <div class="step-title">Ask</div>
+            <div class="code-card">
+              <pre class="code"><code>"What's the latest Aleo block height?"
+"Audit the privacy of credits.aleo."
+"What did transaction at1fv877... reveal publicly?"</code></pre>
+            </div>
+          </li>
+        </ol>
+        <p>
+          The path must be absolute. A client launches the server from its own
+          working directory, not yours.
+        </p>
+      </section>
+
+      <section class="doc-section" id="configuration">
+        <h2>Configuration</h2>
+        <p>Every setting is an environment variable, and every one has a working default.</p>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead>
+              <tr>
+                <th scope="col">Variable</th>
+                <th scope="col">Default</th>
+                <th scope="col">Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>OLEX_NETWORK</code></td>
+                <td><code>testnet</code></td>
+                <td>Set to <code>mainnet</code> to change the default network. Every tool also takes a per-call <code>network</code> argument.</td>
+              </tr>
+              <tr>
+                <td><code>OLEX_TIMEOUT_MS</code></td>
+                <td><code>15000</code></td>
+                <td>Per-request timeout against the Aleo REST API.</td>
+              </tr>
+              <tr>
+                <td><code>OLEX_VIEW_KEY</code></td>
+                <td><em>unset</em></td>
+                <td>An <code>AViewKey1...</code> for the view-key tools. Takes precedence over any <code>view_key</code> argument.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Testnet is the default everywhere. Pointing an autonomous agent at
+          mainnet should be a deliberate act, not something it drifts into.
+        </p>
+      </section>
+      <section class="doc-section" id="privacy-model">
+        <h2>Privacy model</h2>
+        <p>Aleo splits state in two, and the split is the thing worth understanding before reading the tool list:</p>
+        <ul>
+          <li><strong>Public state</strong> lives in mappings. Anyone can read it. This is what a block explorer shows.</li>
+          <li><strong>Private state</strong> lives in encrypted records. Only the account's view key can read them.</li>
+        </ul>
+        <div class="callout is-warn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>
+          </svg>
+          <div>
+            <div class="callout-title">A public balance is a floor, not a total</div>
+            <p>
+              <code>olex_get_balance</code> reads the <code>credits.aleo</code> account
+              mapping, which is public. An address showing <code>0 credits</code> may
+              hold a private balance that nobody can see without its view key. Every
+              balance tool says so in its own output.
+            </p>
+          </div>
+        </div>
+        <div class="callout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/><path d="M12 16v-5m0-3h.01"/>
+          </svg>
+          <div>
+            <div class="callout-title">Privacy is decided per parameter</div>
+            <p>
+              No Aleo program is "private" as a whole. A single function can take a
+              private input and then write it to a mapping, which makes that value
+              public. Finding those cases is what <code>olex_analyze_privacy</code> is for.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="tools-reference">
+        <h2>Tool reference</h2>
+        <p>
+          Ten tools need no key material and run on every surface, hosted included.
+          Arguments in <em>italics</em> are optional. Every tool also accepts
+          <code>network</code>.
+        </p>
+
+        <h3>Chain</h3>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead>
+              <tr><th scope="col">Tool</th><th scope="col">Arguments</th><th scope="col">Returns</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>olex_network_status</code></td>
+                <td><em>none</em></td>
+                <td>Latest height, block hash, round, timestamp and proof target.</td>
+              </tr>
+              <tr>
+                <td><code>olex_get_balance</code></td>
+                <td><code>address</code></td>
+                <td>Public credits balance from the <code>credits.aleo</code> account mapping.</td>
+              </tr>
+              <tr>
+                <td><code>olex_get_program</code></td>
+                <td><code>program_id</code></td>
+                <td>Deployed Aleo instruction source, plus the program's mapping list.</td>
+              </tr>
+              <tr>
+                <td><code>olex_get_mapping_value</code></td>
+                <td><code>program_id</code>, <code>mapping_name</code>, <code>key</code></td>
+                <td>One key from any program's on-chain mapping.</td>
+              </tr>
+              <tr>
+                <td><code>olex_get_block</code></td>
+                <td><em><code>height</code></em></td>
+                <td>A block by height, or the chain tip when height is omitted.</td>
+              </tr>
+              <tr>
+                <td><code>olex_get_transaction</code></td>
+                <td><code>transaction_id</code></td>
+                <td>A transaction with its transitions and how many inputs were private.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Privacy analysis</h3>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead>
+              <tr><th scope="col">Tool</th><th scope="col">Arguments</th><th scope="col">Returns</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>olex_analyze_privacy</code></td>
+                <td><code>program_id</code>, <em><code>function_name</code></em></td>
+                <td>Where the private/public boundary really falls: per-function input and output visibility, mapping writes, and a warning for every private input that reaches public mapping state.</td>
+              </tr>
+              <tr>
+                <td><code>olex_explain_transaction_privacy</code></td>
+                <td><code>transaction_id</code></td>
+                <td>Value by value, what a real transaction exposed on-chain and what stayed encrypted, including how many records it produced.</td>
+              </tr>
+              <tr>
+                <td><code>olex_check_visibility</code></td>
+                <td><code>type</code></td>
+                <td>What an annotation such as <code>u64.private</code> or <code>credits.aleo/transfer_public.future</code> actually means for an observer.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Utility</h3>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead>
+              <tr><th scope="col">Tool</th><th scope="col">Arguments</th><th scope="col">Returns</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>olex_convert_credits</code></td>
+                <td><code>amount</code>, <code>from</code></td>
+                <td>Exact conversion between credits and microcredits using bigint maths, never floats. 1 credit = 1,000,000 microcredits.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="doc-section" id="view-key-tools">
+        <h2>View-key tools</h2>
+        <p>
+          Three tools read your private records. They exist only in the local stdio
+          server, and they are the one thing no block explorer can do for you.
+        </p>
+        <div class="callout is-key">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M15 7a4 4 0 1 1-3.5 5.9L9 15.4V18H6v3H3v-3.6l6.1-6.1A4 4 0 0 1 15 7Z"/>
+          </svg>
+          <div>
+            <div class="callout-title">Prefer the environment variable</div>
+            <p>
+              Set <code>OLEX_VIEW_KEY</code> rather than passing <code>view_key</code>
+              as an argument. An argument is recorded in the conversation transcript;
+              an environment variable is not. When both are present the environment
+              variable wins.
+            </p>
+            <p>
+              A view key grants permanent read access to every record an account has
+              ever received. Olex never asks for a private key
+              (<code>APrivateKey1...</code>) and never echoes a view key back, whole
+              or partial, on success or on failure.
+            </p>
+          </div>
+        </div>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead>
+              <tr><th scope="col">Tool</th><th scope="col">Arguments</th><th scope="col">Returns</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>olex_view_key_address</code></td>
+                <td><em><code>view_key</code></em></td>
+                <td>Confirms a view key parses and shows which account it unlocks. Start here.</td>
+              </tr>
+              <tr>
+                <td><code>olex_decrypt_record</code></td>
+                <td><code>ciphertext</code>, <em><code>view_key</code></em></td>
+                <td>Decrypts a <code>record1...</code> ciphertext you own, or tells you plainly that the record belongs to someone else.</td>
+              </tr>
+              <tr>
+                <td><code>olex_true_balance</code></td>
+                <td><em><code>transaction_id</code></em>, <em><code>from_block</code></em>, <em><code>to_block</code></em>, <em><code>view_key</code></em></td>
+                <td>Public credits plus the private records you own in the scanned scope, and the split between them.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <code>olex_true_balance</code> needs a scope: either a
+          <code>transaction_id</code> or a <code>from_block</code>/<code>to_block</code>
+          range of at most 50 blocks. It refuses an unbounded scan rather than
+          quietly walking the chain, and the private figure it reports covers only
+          the range actually scanned.
+        </p>
+      </section>
+
+      <section class="doc-section" id="prompts">
+        <h2>Prompts</h2>
+        <p>
+          Prompts appear in an MCP client as slash commands. A tool list asks you to
+          know which tool to reach for; a prompt states an intent and lets the model
+          plan the calls.
+        </p>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead>
+              <tr><th scope="col">Prompt</th><th scope="col">Arguments</th><th scope="col">What it does</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>audit-program-privacy</code></td>
+                <td><code>program_id</code>, <em><code>network</code></em></td>
+                <td>Audits a deployed program and reports what genuinely stays private, what is public despite looking private, and which functions to avoid if an amount must stay hidden.</td>
+              </tr>
+              <tr>
+                <td><code>explain-transaction-privacy</code></td>
+                <td><code>transaction_id</code>, <em><code>network</code></em></td>
+                <td>Walks a real transaction and explains what an observer learns from it, in plain language.</td>
+              </tr>
+              <tr>
+                <td><code>true-balance</code></td>
+                <td><em><code>transaction_id</code></em>, <em><code>from_block</code></em>, <em><code>to_block</code></em></td>
+                <td>Computes a real total balance including private records. Local stdio only, since it needs a view key.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="doc-section" id="surfaces">
+        <h2>Surfaces</h2>
+        <p>
+          Olex runs on two surfaces, and they do not expose the same tools. The
+          difference is structural rather than a filter.
+        </p>
+        <div class="doc-table-wrap">
+          <table class="doc-table">
+            <thead>
+              <tr><th scope="col">Surface</th><th scope="col">Tools</th><th scope="col">View keys</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Local stdio</td>
+                <td>13</td>
+                <td>Available. Keys stay on your machine.</td>
+              </tr>
+              <tr>
+                <td>Hosted bridge</td>
+                <td>10</td>
+                <td>Not registered at all.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The hosted bridge imports the shared server factory, which never imports
+          the view-key module. So those tools cannot be constructed there even by
+          mistake, <code>tools/list</code> over HTTP cannot advertise one, and the
+          WASM cryptography they need never enters the serverless bundle. A separate
+          allow-list in the bridge is a second, independent barrier rather than the
+          only one.
+        </p>
+        <p>
+          The <a href="./#playground">playground</a> on the home page runs against
+          that hosted bridge. It opens a genuine MCP session server-side and
+          dispatches a real <code>tools/call</code>, so the code it exercises is the
+          same code your editor gets over stdio - not a browser reimplementation.
+        </p>
+      </section>
+
+      <section class="doc-section" id="verify">
+        <h2>Verify</h2>
+        <div class="code-card">
+          <pre class="code"><code>npm run smoke      # drives the real server over stdio against live testnet
+npm run inspect    # opens the official MCP Inspector web UI</code></pre>
+        </div>
+        <p>
+          <code>npm run smoke</code> spawns the built binary the way a client would
+          and hits the live network. It is deliberately not a unit test with mocks:
+          the point is to prove the whole path works, not that the pieces work in
+          isolation.
+        </p>
+        <p>
+          <code>npm run inspect</code> prints a <code>localhost</code> URL with an
+          auth token, which is the closest thing to a live URL an MCP server has.
+          MCP servers speak JSON-RPC over stdin and stdout; they are launched by the
+          client, not hosted on a port.
+        </p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="ink-3">Olex · MCP server for Aleo</span>
+    <span class="ink-3">Data: public Provable API · testnet</span>
+  </div>
+</footer>
+
+<script src="./docs.js" type="module"></script>
+</body>
+</html>
