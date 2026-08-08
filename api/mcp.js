@@ -69,7 +69,7 @@ async function openSession() {
  * Turn a schema-validation complaint into a sentence, or return "".
  *
  * The SDK reports invalid params two different ways: as a thrown MCP error,
- * and — for a tool call — as a normal result carrying isError with the raw
+ * and - for a tool call - as a normal result carrying isError with the raw
  * "-32602: Input validation error" text in its content. Both mean the caller
  * omitted or mistyped an argument, so both get the same plain-language
  * treatment rather than leaking protocol framing into the UI.
@@ -117,7 +117,7 @@ export default async function handler(req, res) {
   let session;
 
   try {
-    // tools/list — lets the page render the catalog from the server itself.
+    // tools/list - lets the page render the catalog from the server itself.
     if (body.method === "tools/list") {
       session = await openSession();
       const listed = await session.client.listTools();
@@ -160,7 +160,7 @@ export default async function handler(req, res) {
     }
 
     // A tool that reports a domain error (bad address, missing block) is a
-    // successful HTTP exchange — the transport worked. Surface isError so the
+    // successful HTTP exchange - the transport worked. Surface isError so the
     // page can style it as a failure without treating it as a 500.
     return send(res, 200, {
       ok: true,

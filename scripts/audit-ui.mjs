@@ -46,7 +46,7 @@ for (const vp of VIEWPORTS) {
     if (m.type() === "error") consoleErrors.push(m.text().slice(0, 160));
   });
   page.on("requestfailed", (r) => {
-    failedRequests.push(`${r.url().slice(0, 90)} — ${r.failure()?.errorText}`);
+    failedRequests.push(`${r.url().slice(0, 90)} - ${r.failure()?.errorText}`);
   });
   page.on("response", (r) => {
     if (r.status() >= 400) failedRequests.push(`${r.status()} ${r.url().slice(0, 90)}`);
@@ -74,7 +74,7 @@ for (const vp of VIEWPORTS) {
         const hero = document.getElementById("hero-height")?.textContent?.trim() ?? "";
         const rows = document.querySelectorAll("#feed-body tr").length;
         const skeleton = document.querySelector("#feed-body .skeleton-row") !== null;
-        return hero !== "" && hero !== "—" && rows > 1 && !skeleton;
+        return hero !== "" && hero !== "-" && rows > 1 && !skeleton;
       },
       { timeout: 30_000, polling: 250 },
     );
@@ -87,7 +87,7 @@ for (const vp of VIEWPORTS) {
   const report = await page.evaluate((TOUCH_MIN) => {
     const doc = document.documentElement;
 
-    // 1. horizontal overflow — the single most common mobile defect
+    // 1. horizontal overflow - the single most common mobile defect
     const overflowX = doc.scrollWidth - doc.clientWidth;
     const offenders = [];
     if (overflowX > 1) {
@@ -164,7 +164,7 @@ for (const vp of VIEWPORTS) {
     const sparkPaths = document.querySelectorAll("#spark path").length;
     const cards = document.querySelectorAll("#tool-cards .card").length;
 
-    // 6. layout sanity — is anything stacked on top of something else?
+    // 6. layout sanity - is anything stacked on top of something else?
     const tiles = [...document.querySelectorAll(".tile")].map((t) => {
       const r = t.getBoundingClientRect();
       return { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top) };
@@ -180,7 +180,7 @@ for (const vp of VIEWPORTS) {
 
   // ---- assertions -------------------------------------------------------
   if (!dataReady) {
-    note("WARN", "live data did not settle within 30s — network slow, not a UI defect");
+    note("WARN", "live data did not settle within 30s - network slow, not a UI defect");
   }
 
   if (report.overflowX > 1) {

@@ -2,7 +2,7 @@
  * Shared MCP server factory.
  *
  * Both the stdio entry point (src/index.ts) and the HTTP bridge (api/mcp.js)
- * import this to ensure identical tool registration — with one deliberate
+ * import this to ensure identical tool registration - with one deliberate
  * exception. View-key tools are registered only when `viewKeyTools` is asked
  * for, and only the stdio entry asks.
  *
@@ -28,7 +28,7 @@ export interface ServerOptions {
    * The registration itself is the caller's job, and deliberately so: this
    * module must not import `tools/vault.js`, or the WASM cryptography behind it
    * would be pulled into the serverless bundle that imports `createServer`.
-   * Only src/index.ts — the local stdio binary — does that import.
+   * Only src/index.ts - the local stdio binary - does that import.
    */
   viewKeyTools?: boolean;
 }
@@ -46,7 +46,7 @@ export function createServer(options: ServerOptions = {}): McpServer {
         "balance from `olex_get_balance` is a floor, not a total.\n" +
         "- `olex_analyze_privacy` reports where a program's private/public " +
         "boundary actually falls. Values that reach mapping state are public " +
-        "even when they arrived as private inputs — that is the leak worth " +
+        "even when they arrived as private inputs - that is the leak worth " +
         "reporting to a user.\n" +
         "- All tools default to testnet. Never assume mainnet.\n" +
         "- Amounts are microcredits (1 credit = 1,000,000 microcredits).\n" +
@@ -56,7 +56,7 @@ export function createServer(options: ServerOptions = {}): McpServer {
             "OLEX_VIEW_KEY environment variable over passing a key as an " +
             "argument: an argument is recorded in this conversation, an " +
             "environment variable is not. Never suggest a user paste a private " +
-            "key (APrivateKey1...) — a view key grants read access only.\n"
+            "key (APrivateKey1...) - a view key grants read access only.\n"
           : "- View-key tools are not available on this surface: it is hosted, " +
             "and a view key must never be sent over a network. Private records " +
             "can be described here but not decrypted.\n"),

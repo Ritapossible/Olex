@@ -1,7 +1,7 @@
 /**
  * Unit conversion helpers.
  *
- * Exact integer math only — credit amounts must never round-trip through a
+ * Exact integer math only - credit amounts must never round-trip through a
  * JS float. 0.1 + 0.2 problems are unacceptable when the output is a balance.
  */
 
@@ -21,7 +21,7 @@ export function registerUtilTools(server: McpServer): void {
       title: "Convert credits and microcredits",
       description:
         "Convert between Aleo credits and microcredits (1 credit = 1,000,000 " +
-        "microcredits). Uses exact integer arithmetic — safe for balances and fees.",
+        "microcredits). Uses exact integer arithmetic - safe for balances and fees.",
       inputSchema: {
         amount: z
           .string()
@@ -45,7 +45,7 @@ export function registerUtilTools(server: McpServer): void {
         if (!/^-?\d+$/.test(text)) {
           return fail(
             null,
-            `"${amount}" is not a whole number. Microcredits are indivisible — ` +
+            `"${amount}" is not a whole number. Microcredits are indivisible - ` +
               "they cannot have decimal places.",
           );
         }

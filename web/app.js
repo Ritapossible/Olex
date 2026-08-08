@@ -215,6 +215,17 @@ function paintStats(b) {
   $("stat-round").textContent = groupDigits(b.round);
   $("stat-round-sub").textContent = `block ${groupDigits(b.height)}`;
   $("stat-txs").textContent = b.txs;
+
+  // Aleo testnet produces blocks on a schedule whether or not anyone submitted
+  // a transaction, so this tile reads 0 for long stretches. On its own that is
+  // indistinguishable from a broken reader, so say how many the recent window
+  // carried - a real zero and a stuck one then look different.
+  const windowTxs = feed.reduce((sum, blk) => sum + (blk.txs ?? 0), 0);
+  $("stat-txs-sub").textContent = feed.length
+    ? windowTxs === 0
+      ? `none in the last ${feed.length} blocks`
+      : `${groupDigits(windowTxs)} in the last ${feed.length} blocks`
+    : "current block";
   $("stat-proof").textContent = b.proofTarget ? groupDigits(b.proofTarget) : "-";
 
   // Average over the feed, not the gap between the last two polls: polling is
@@ -526,9 +537,9 @@ const CATALOG = [
   ["olex_analyze_privacy", "Static analysis of where a program's private/public boundary really falls, including private inputs that leak into public mapping state.", "read"],
   ["olex_explain_transaction_privacy", "Value by value, what a real transaction exposed on-chain and what stayed encrypted.", "read"],
   ["olex_check_visibility", "What a type annotation like u64.private or credits.aleo/transfer_public.future actually means.", "util"],
-  ["olex_decrypt_record", "Decrypt a record ciphertext with your view key - the one thing no block explorer can do. Local stdio only.", "key"],
-  ["olex_true_balance", "Your real balance: public credits plus the private records you own. Local stdio only.", "key"],
-  ["olex_view_key_address", "Confirm a view key is valid and show which account it unlocks. Local stdio only.", "key"],
+  ["olex_decrypt_record", "Decrypt a record ciphertext with your view key - the one thing no block explorer can do. Pure local computation.", "key"],
+  ["olex_true_balance", "Your real balance: public credits plus the private records you own. Reads the chain, then decrypts locally.", "key-net"],
+  ["olex_view_key_address", "Confirm a view key is valid and show which account it unlocks. Pure local computation.", "key"],
 ];
 
 let activeTool = "status";
@@ -680,6 +691,17 @@ function fillExample() {
   if (!Object.keys(ex).length) runTool();
 }
 
+/* A tool's tag answers two independent questions: does it need a view key, and
+   does it reach the network. One combined label conflated them and got a tool
+   wrong - olex_view_key_address was marked "local only" beside olex_true_balance,
+   which makes three API calls. Keys and network are tracked separately now. */
+const TAG_TEXT = {
+  read: "read-only · no keys",
+  util: "no keys · no network",
+  key: "view key · stdio only",
+  "key-net": "view key · stdio only · reads chain",
+};
+
 function renderCatalog() {
   const wrap = $("tool-cards");
   for (const [name, desc, tag] of CATALOG) {
@@ -695,13 +717,8 @@ function renderCatalog() {
     d.textContent = desc;
 
     const t = document.createElement("span");
-    t.className = tag === "key" ? "card-tag is-key" : "card-tag";
-    t.textContent =
-      tag === "read"
-        ? "read-only · no keys"
-        : tag === "key"
-          ? "view key · local only"
-          : "local · no network";
+    t.className = tag === "key" || tag === "key-net" ? "card-tag is-key" : "card-tag";
+    t.textContent = TAG_TEXT[tag] ?? TAG_TEXT.util;
 
     card.append(n, d, t);
     wrap.appendChild(card);

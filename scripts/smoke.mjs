@@ -2,7 +2,7 @@
  * Smoke test: drives the built server over real stdio JSON-RPC.
  *
  * This is deliberately not a unit test with mocks. It spawns the actual binary
- * the way a client would, and hits the live Aleo API — the point is to prove
+ * the way a client would, and hits the live Aleo API - the point is to prove
  * the whole path works, not that the pieces work in isolation.
  */
 
@@ -27,8 +27,8 @@ const FIXTURE_TX =
  * A throwaway account, derived here rather than committed.
  *
  * No real view key may enter this repo, and RecordPlaintext has no .encrypt(),
- * so a ciphertext cannot be synthesised locally either. What is left — and what
- * actually matters — is proving the *negative*: a real on-chain ciphertext
+ * so a ciphertext cannot be synthesised locally either. What is left - and what
+ * actually matters - is proving the *negative*: a real on-chain ciphertext
  * parses, and a key that does not own it is told so rather than shown garbage.
  */
 const { Account } = await import("@provablehq/sdk");
@@ -97,7 +97,7 @@ let failures = 0;
 function check(label, condition, detail) {
   const mark = condition ? "PASS" : "FAIL";
   if (!condition) failures++;
-  console.log(`  [${mark}] ${label}${detail ? ` — ${detail}` : ""}`);
+  console.log(`  [${mark}] ${label}${detail ? ` - ${detail}` : ""}`);
 }
 
 try {
@@ -248,7 +248,7 @@ try {
   });
   const notMineText = text(notMine);
   // A real on-chain ciphertext must parse, and must be correctly reported as
-  // belonging to someone else — proving isOwner works rather than that the
+  // belonging to someone else - proving isOwner works rather than that the
   // parser failed open.
   check("real ciphertext parses and is reported as not ours",
     /Not your record/.test(notMineText), notMineText.split("\n")[0]);
@@ -270,7 +270,7 @@ try {
   // The count comes from the fixture above, so this asserts the tool agrees with
   // the chain rather than with a number typed into this file. What is being
   // pinned is the ownership split: none of these records belong to the throwaway
-  // key, so every one of them must land in the "others" column — a parser that
+  // key, so every one of them must land in the "others" column - a parser that
   // failed open and claimed them would break this check.
   const expectedScan =
     `${FIXTURE_RECORDS.length} encrypted record(s) found, 0 yours, ` +

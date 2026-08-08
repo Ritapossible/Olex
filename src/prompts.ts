@@ -1,5 +1,5 @@
 /**
- * MCP prompts — named workflows, not just tools.
+ * MCP prompts - named workflows, not just tools.
  *
  * A tool list asks the user to know which tool to reach for. A prompt states an
  * intent ("audit this program's privacy") and lets the model plan the calls. In
@@ -7,7 +7,7 @@
  * shipping an API and shipping a product.
  *
  * Prompts return instructions for the model, so they must not assume a tool
- * exists on a surface where it does not — hence the viewKeyTools flag.
+ * exists on a surface where it does not - hence the viewKeyTools flag.
  */
 
 import { z } from "zod";
@@ -54,11 +54,11 @@ export function registerPrompts(
           "2. Call `olex_get_program` if you need the source to explain a finding.\n" +
           "3. Report, for a developer deciding whether to trust it with data:\n" +
           "   - What genuinely stays private (encrypted records, private inputs).\n" +
-          "   - What is public despite looking private — especially any value " +
+          "   - What is public despite looking private - especially any value " +
           "that reaches mapping state, since mappings are readable by anyone.\n" +
           "   - Which specific functions to avoid if the amount must stay hidden.\n\n" +
           "Be concrete: name functions and parameters. Do not claim a program is " +
-          "private overall — privacy on Aleo is decided per parameter.",
+          "private overall - privacy on Aleo is decided per parameter.",
       ),
   );
 
@@ -112,7 +112,7 @@ export function registerPrompts(
         ? `Scan transaction \`${transaction_id}\`.`
         : from_block
           ? `Scan blocks ${from_block} to ${to_block ?? from_block}.`
-          : "Ask the user which transaction or block range to scan — an " +
+          : "Ask the user which transaction or block range to scan - an " +
             "unbounded scan is not supported, and the testnet is mostly idle so " +
             "a recent range will usually be empty.";
 

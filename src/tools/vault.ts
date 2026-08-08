@@ -1,5 +1,5 @@
 /**
- * View-key tools — the only tools that handle secrets.
+ * View-key tools - the only tools that handle secrets.
  *
  * These answer the question a block explorer cannot: what does this account
  * actually own, including the private records that make up most real Aleo
@@ -7,7 +7,7 @@
  * excluded from the hosted web bridge (see ALLOWED_TOOLS in api/mcp.js) and is
  * reachable only over local stdio, where the key stays on the user's machine.
  *
- * Key handling — parsing, redaction, env-var precedence — lives in
+ * Key handling - parsing, redaction, env-var precedence - lives in
  * `src/lib/privacy.ts` so it is enforced in one place rather than per tool.
  */
 
@@ -97,7 +97,7 @@ export function registerVaultTools(server: McpServer): void {
       title: "Decrypt an encrypted record",
       description:
         "Decrypt an Aleo record ciphertext (starts with 'record1') using a view key, " +
-        "revealing its owner and fields — including the microcredit amount for " +
+        "revealing its owner and fields - including the microcredit amount for " +
         "credits.aleo records. Only works for records the key owns. This is the one " +
         "thing no block explorer can do. Runs locally over stdio; the key is not sent " +
         "to any network.",
@@ -130,7 +130,7 @@ export function registerVaultTools(server: McpServer): void {
             "",
             "This ciphertext is not owned by the account behind that view key, so it " +
               "cannot be decrypted with it. That is the expected result for most " +
-              "records on-chain — they belong to other people.",
+              "records on-chain - they belong to other people.",
             "",
             `Checked against: \`${addressFromViewKey(resolved.viewKey)}\``,
             "",
@@ -159,7 +159,7 @@ export function registerVaultTools(server: McpServer): void {
       if (fields.length) {
         lines.push("", "Fields:");
         for (const [key, value] of fields) {
-          const shown = value.length > 60 ? `${value.slice(0, 60)}…` : value;
+          const shown = value.length > 60 ? `${value.slice(0, 60)}...` : value;
           lines.push(`  - \`${key}\`: ${shown}`);
         }
       }
@@ -179,7 +179,7 @@ export function registerVaultTools(server: McpServer): void {
   server.registerTool(
     "olex_true_balance",
     {
-      title: "True balance — public plus private",
+      title: "True balance - public plus private",
       description:
         "Compute an account's REAL total balance: its public credits.aleo balance plus " +
         "the value of the private records it owns in a given transaction or block range. " +
@@ -333,13 +333,13 @@ export function registerVaultTools(server: McpServer): void {
       const total = publicMicro + privateMicro;
 
       const lines = [
-        `**True balance — \`${address}\`**`,
+        `**True balance - \`${address}\`**`,
         "",
         `- Public: **${microcreditsToCredits(publicMicro)} credits**${publicNote}`,
         `- Private (records you own): **${microcreditsToCredits(privateMicro)} credits**`,
         `- **Total: ${microcreditsToCredits(total)} credits**`,
         "",
-        `Scanned ${scanned.join(", ")} on ${net.name} — ${checked} encrypted record(s) ` +
+        `Scanned ${scanned.join(", ")} on ${net.name} - ${checked} encrypted record(s) ` +
           `found, ${owned.length} yours, ${notOwned} belonging to others.`,
       ];
 
@@ -350,7 +350,7 @@ export function registerVaultTools(server: McpServer): void {
             `  - ${microcreditsToCredits(r.micro)} credits from \`${r.program}\` → \`${r.fn}\``,
           );
         }
-        if (owned.length > 20) lines.push(`  _… and ${owned.length - 20} more._`);
+        if (owned.length > 20) lines.push(`  _... and ${owned.length - 20} more._`);
       }
 
       lines.push(
@@ -371,7 +371,7 @@ export function registerVaultTools(server: McpServer): void {
       title: "Derive the address for a view key",
       description:
         "Derive the Aleo address a view key belongs to, confirming the key is valid " +
-        "and which account it unlocks — without decrypting anything. Use this to check " +
+        "and which account it unlocks - without decrypting anything. Use this to check " +
         "a key is configured correctly before scanning.",
       inputSchema: { view_key: viewKeyArg },
     },

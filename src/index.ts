@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * Olex — the bridge between AI agents and Aleo's privacy ecosystem.
+ * Olex - the bridge between AI agents and Aleo's privacy ecosystem.
  *
  * An MCP server that gives any MCP-compatible client (Claude Code, Cursor,
  * VS Code, ...) first-class access to the Aleo blockchain.
  *
  * Transport is stdio: the client spawns this process and speaks JSON-RPC over
- * stdin/stdout. Nothing may be written to stdout except protocol frames —
+ * stdin/stdout. Nothing may be written to stdout except protocol frames -
  * every diagnostic goes to stderr, or it corrupts the stream.
  */
 
@@ -17,7 +17,7 @@ import { DEFAULT_NETWORK } from "./lib/network.js";
 
 async function main(): Promise<void> {
   // View-key tools are registered here rather than inside createServer(), so
-  // the hosted bridge — which imports createServer and nothing else — cannot
+  // the hosted bridge - which imports createServer and nothing else - cannot
   // reach them and does not bundle the WASM cryptography they need.
   const server = createServer({ viewKeyTools: true });
   registerVaultTools(server);
@@ -28,7 +28,7 @@ async function main(): Promise<void> {
 
   // stderr is safe; stdout belongs to the protocol.
   process.stderr.write(
-    `olex ${VERSION} ready — default network: ${DEFAULT_NETWORK}\n`,
+    `olex ${VERSION} ready - default network: ${DEFAULT_NETWORK}\n`,
   );
 
   const shutdown = async (): Promise<void> => {

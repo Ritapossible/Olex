@@ -1,7 +1,7 @@
 /**
  * Shared shape for tool results.
  *
- * Errors are returned as content with isError set, never thrown — a thrown
+ * Errors are returned as content with isError set, never thrown - a thrown
  * error inside an MCP handler surfaces to the client as a protocol failure,
  * which reads to the user as "the tool is broken" rather than "the address
  * was wrong". Returning a readable message lets the assistant recover.

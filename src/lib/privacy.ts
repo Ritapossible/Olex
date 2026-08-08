@@ -1,5 +1,5 @@
 /**
- * View keys and record decryption — the only module that touches key material.
+ * View keys and record decryption - the only module that touches key material.
  *
  * Aleo records are encrypted to their owner. Reading one requires that account's
  * view key, which is secret: it grants permanent read access to every record the
@@ -31,8 +31,8 @@ import type {
  * The SDK is loaded on demand, not at import time.
  *
  * It is WASM-backed and costs real time and memory to instantiate. Loading it
- * lazily means a session that never touches a view key never pays for it, and —
- * more importantly — no WASM initialisation runs during stdio startup, where a
+ * lazily means a session that never touches a view key never pays for it, and -
+ * more importantly - no WASM initialisation runs during stdio startup, where a
  * single stray byte on stdout would corrupt the JSON-RPC stream. `import type`
  * above is erased at compile time, so this file pulls in nothing at runtime
  * until `loadCrypto()` is awaited.
@@ -161,7 +161,7 @@ export type DecryptOutcome =
  * Decrypt a record if the view key owns it.
  *
  * Returns an outcome instead of throwing, because "someone else's record" is a
- * normal result when scanning a block — most records will not be yours. Ownership
+ * normal result when scanning a block - most records will not be yours. Ownership
  * is checked with `isOwner` first, which avoids attempting decryption on every
  * ciphertext in a scan.
  */

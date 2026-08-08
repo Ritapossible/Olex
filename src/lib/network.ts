@@ -2,7 +2,7 @@
  * Network layer for Olex.
  *
  * Every call in here is read-only and unauthenticated. No key material ever
- * passes through this module — that separation is deliberate and load-bearing:
+ * passes through this module - that separation is deliberate and load-bearing:
  * an AI agent can call anything here without any risk of moving funds.
  */
 
@@ -56,7 +56,7 @@ const TIMEOUT_MS = Number(process.env.OLEX_TIMEOUT_MS ?? 15_000);
 /**
  * GET a path relative to the network's API root.
  *
- * Returns parsed JSON when the response is JSON, otherwise the raw text —
+ * Returns parsed JSON when the response is JSON, otherwise the raw text -
  * several Aleo endpoints (program source, mapping values) return bare strings
  * rather than JSON objects, so callers must tolerate both.
  */

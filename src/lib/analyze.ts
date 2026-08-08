@@ -1,7 +1,7 @@
 /**
  * Static privacy analysis of deployed Aleo instruction source.
  *
- * Aleo's privacy is not a property of a program as a whole — it is decided per
+ * Aleo's privacy is not a property of a program as a whole - it is decided per
  * parameter, by the visibility mode on each type. A program can be advertised as
  * private and still publish every amount it touches through a mapping write.
  * This module reads the deployed source and reports where the private/public
@@ -72,7 +72,7 @@ const BLOCK_RE =
 const PARAM_RE = /^\s*(input|output)\s+(r\d+|[A-Za-z0-9_.]+)\s+as\s+(.+?)\s*;\s*$/;
 const IMPORT_RE = /^\s*import\s+([A-Za-z0-9_]+\.aleo)\s*;/;
 
-/** `set r0 into account[r1]` — the write that makes state public. */
+/** `set r0 into account[r1]` - the write that makes state public. */
 const SET_RE = /^\s*set\s+\S+\s+into\s+([A-Za-z0-9_]+)\s*\[/;
 const REMOVE_RE = /^\s*remove\s+([A-Za-z0-9_]+)\s*\[/;
 const READ_RE = /^\s*(get|get\.or_use|contains)\s+([A-Za-z0-9_]+)\s*\[/;
@@ -83,7 +83,7 @@ const READ_RE = /^\s*(get|get\.or_use|contains)\s+([A-Za-z0-9_]+)\s*\[/;
  * The mode is the LAST dot-segment, not the second: a future type is written
  * `credits.aleo/transfer_public.future`, so splitting on the first dot would
  * report the mode as "aleo/transfer_public". Types with no mode at all
- * (`u64`, or a struct name) are reported as unspecified rather than guessed —
+ * (`u64`, or a struct name) are reported as unspecified rather than guessed -
  * saying "public" there would be an assertion the source does not make.
  */
 export function modeOf(type: string): Mode {
@@ -225,7 +225,7 @@ function tally(functions: FunctionInfo[]): Analysis["totals"] {
  * Turn the parsed shape into statements a developer can act on.
  *
  * Ordered warn-first, because the interesting case is a function that looks
- * private at the signature but writes a mapping — the amount is then on-chain
+ * private at the signature but writes a mapping - the amount is then on-chain
  * in the clear regardless of how the input was passed.
  */
 function buildFindings(functions: FunctionInfo[]): Finding[] {
@@ -260,7 +260,7 @@ function buildFindings(functions: FunctionInfo[]): Finding[] {
       findings.push({
         severity: "note",
         fn: fn.name,
-        message: `all ${fn.inputs.length} input(s) are public — this call hides nothing.`,
+        message: `all ${fn.inputs.length} input(s) are public - this call hides nothing.`,
       });
     }
 

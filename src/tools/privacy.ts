@@ -1,5 +1,5 @@
 /**
- * Privacy tools — the analysis surface.
+ * Privacy tools - the analysis surface.
  *
  * Everything in this file is safe to expose publicly: it reads deployed source
  * over the same public API the rest of the server uses and needs no key
@@ -68,7 +68,7 @@ export function registerPrivacyTools(server: McpServer): void {
         return fail(
           null,
           `"${id}" is not a valid program ID. Program IDs are lowercase and end ` +
-            "in '.aleo' — e.g. 'credits.aleo'.",
+            "in '.aleo' - e.g. 'credits.aleo'.",
         );
       }
 
@@ -90,7 +90,7 @@ export function registerPrivacyTools(server: McpServer): void {
         }
 
         const lines: string[] = [
-          `**Privacy analysis — ${id}** on ${net.name}`,
+          `**Privacy analysis - ${id}** on ${net.name}`,
           "",
         ];
 
@@ -107,7 +107,7 @@ export function registerPrivacyTools(server: McpServer): void {
           if (analysis.imports.length) {
             lines.push(
               `- Imports: ${analysis.imports.map((i) => `\`${i}\``).join(", ")} ` +
-                "_(analyze these separately — their leaks are yours too)_",
+                "_(analyze these separately - their leaks are yours too)_",
             );
           }
           lines.push("");
@@ -117,10 +117,10 @@ export function registerPrivacyTools(server: McpServer): void {
           lines.push("**What this reveals**", "");
           for (const f of analysis.findings.slice(0, 12)) {
             const tag = f.severity === "warn" ? "⚠" : f.severity === "note" ? "•" : "·";
-            lines.push(`${tag} \`${f.fn}\` — ${f.message}`);
+            lines.push(`${tag} \`${f.fn}\` - ${f.message}`);
           }
           if (analysis.findings.length > 12) {
-            lines.push(`_… and ${analysis.findings.length - 12} more._`);
+            lines.push(`_... and ${analysis.findings.length - 12} more._`);
           }
           lines.push("");
         }
@@ -130,7 +130,7 @@ export function registerPrivacyTools(server: McpServer): void {
           const sig = fn.inputs.length
             ? fn.inputs.map((i) => MODE_LABEL[i.mode]).join(", ")
             : "no inputs";
-          lines.push(`\`${fn.name}\` — ${sig}`);
+          lines.push(`\`${fn.name}\` - ${sig}`);
 
           for (const i of fn.inputs) {
             lines.push(`    in  ${i.register}: \`${i.type}\` → ${MODE_LABEL[i.mode]}`);
@@ -145,11 +145,11 @@ export function registerPrivacyTools(server: McpServer): void {
           if (fn.readsMappings) lines.push("    · reads public mapping state");
           lines.push("");
         }
-        if (shown.length > 30) lines.push(`_… and ${shown.length - 30} more functions._`);
+        if (shown.length > 30) lines.push(`_... and ${shown.length - 30} more functions._`);
 
         lines.push(
           "_Static analysis of declared visibility. It cannot see how a caller " +
-            "uses this program — passing a value publicly to a private parameter " +
+            "uses this program - passing a value publicly to a private parameter " +
             "still exposes it in the transaction._",
         );
 
@@ -224,15 +224,15 @@ export function registerPrivacyTools(server: McpServer): void {
             const value = inp?.value == null ? "" : String(inp.value);
             if (type === "public") {
               publicCount++;
-              lines.push(`    in  PUBLIC — \`${truncate(value)}\` _(visible to everyone)_`);
+              lines.push(`    in  PUBLIC - \`${truncate(value)}\` _(visible to everyone)_`);
             } else if (type === "private") {
               privateCount++;
-              lines.push(`    in  private — ciphertext \`${truncate(value)}\``);
+              lines.push(`    in  private - ciphertext \`${truncate(value)}\``);
             } else if (type.startsWith("record")) {
               privateCount++;
-              lines.push(`    in  private — record serial number \`${truncate(value)}\``);
+              lines.push(`    in  private - record serial number \`${truncate(value)}\``);
             } else {
-              lines.push(`    in  ${type} — \`${truncate(value)}\``);
+              lines.push(`    in  ${type} - \`${truncate(value)}\``);
             }
           }
 
@@ -247,14 +247,14 @@ export function registerPrivacyTools(server: McpServer): void {
               );
             } else if (type === "future") {
               lines.push(
-                "    out future — runs on-chain in public finalize " +
+                "    out future - runs on-chain in public finalize " +
                   "_(anything it writes becomes public)_",
               );
             } else if (type === "public") {
               publicCount++;
-              lines.push(`    out PUBLIC — \`${truncate(value)}\``);
+              lines.push(`    out PUBLIC - \`${truncate(value)}\``);
             } else {
-              lines.push(`    out ${type} — \`${truncate(value)}\``);
+              lines.push(`    out ${type} - \`${truncate(value)}\``);
             }
           }
           lines.push("");
@@ -309,7 +309,7 @@ export function registerPrivacyTools(server: McpServer): void {
           "Encrypted in the transaction. Only the parties to the execution can read it; " +
           "the value never appears on-chain in the clear.",
         public:
-          "Plaintext on-chain. Anyone reading the transaction sees this value — " +
+          "Plaintext on-chain. Anyone reading the transaction sees this value - " +
           "including amounts and addresses.",
         record:
           "An encrypted record, readable only with the owner's view key. Spending it " +
@@ -318,7 +318,7 @@ export function registerPrivacyTools(server: McpServer): void {
           "Fixed at compile time and public. Baked into the program, so it is visible to all.",
         future:
           "A deferred on-chain computation. The finalize body runs publicly, so every " +
-          "value it touches — and every mapping it writes — becomes public.",
+          "value it touches - and every mapping it writes - becomes public.",
         unspecified:
           "No visibility mode declared. Aleo requires one on function parameters, so this " +
           "is likely a record field, a struct member, or an incomplete annotation.",
@@ -326,7 +326,7 @@ export function registerPrivacyTools(server: McpServer): void {
 
       return ok(
         [
-          `**\`${text}\`** — ${MODE_LABEL[mode]}`,
+          `**\`${text}\`** - ${MODE_LABEL[mode]}`,
           "",
           explain[mode],
         ].join("\n"),
@@ -338,5 +338,5 @@ export function registerPrivacyTools(server: McpServer): void {
 /** Ciphertexts run to hundreds of characters; keep output readable. */
 function truncate(value: string, max = 44): string {
   const text = value.replace(/^"|"$/g, "");
-  return text.length > max ? `${text.slice(0, max)}…` : text || "(empty)";
+  return text.length > max ? `${text.slice(0, max)}...` : text || "(empty)";
 }

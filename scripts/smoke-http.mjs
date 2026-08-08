@@ -19,7 +19,7 @@ function check(label, condition, detail = "") {
     console.log(`  PASS  ${label}`);
   } else {
     failures++;
-    console.log(`  FAIL  ${label}${detail ? ` — ${detail}` : ""}`);
+    console.log(`  FAIL  ${label}${detail ? ` - ${detail}` : ""}`);
   }
 }
 
@@ -107,7 +107,7 @@ try {
   );
 
   // The security boundary, asserted rather than assumed. View-key tools are not
-  // registered on this surface at all, so they must be absent from the catalog —
+  // registered on this surface at all, so they must be absent from the catalog -
   // not merely blocked at the ALLOWED_TOOLS gate.
   console.log("\nview-key tools must not exist on the hosted surface");
   for (const secret of [

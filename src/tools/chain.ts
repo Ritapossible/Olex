@@ -1,5 +1,5 @@
 /**
- * Chain query tools — the read-only surface of Olex.
+ * Chain query tools - the read-only surface of Olex.
  *
  * These need no keys, no Leo CLI, and no funded account, which makes them the
  * dependable core of a live demo. Everything here was written against verified
@@ -68,7 +68,7 @@ export function registerChainTools(server: McpServer): void {
 
         return ok(
           [
-            `**Aleo ${net.name} — online**`,
+            `**Aleo ${net.name} - online**`,
             "",
             `- Latest block: **${height ? groupDigits(height) : "unknown"}**`,
             `- Block hash: \`${block.block_hash ?? "unknown"}\``,
@@ -94,7 +94,7 @@ export function registerChainTools(server: McpServer): void {
         "Look up the PUBLIC credits balance of an Aleo address by reading the " +
         "credits.aleo account mapping. Note: this only sees public balances. " +
         "Private balances live in encrypted records and are invisible to anyone " +
-        "without the view key — that is the point of Aleo.",
+        "without the view key - that is the point of Aleo.",
       inputSchema: {
         address: z
           .string()
@@ -126,7 +126,7 @@ export function registerChainTools(server: McpServer): void {
             [
               `**${addr}**`,
               "",
-              "Public balance: **0 credits** — no entry in the `credits.aleo/account` mapping.",
+              "Public balance: **0 credits** - no entry in the `credits.aleo/account` mapping.",
               "",
               "This address has never held public credits on " +
                 `${net.name}. It may still hold **private** balances in records, ` +
@@ -142,7 +142,7 @@ export function registerChainTools(server: McpServer): void {
             `Public balance: **${microcreditsToCredits(micro)} credits**`,
             `(${groupDigits(micro)} microcredits) on ${net.name}`,
             "",
-            "_Private record balances are not included — they are encrypted on-chain._",
+            "_Private record balances are not included - they are encrypted on-chain._",
             "",
             `Explorer: ${net.explorer}/address/${addr}`,
           ].join("\n"),
@@ -176,7 +176,7 @@ export function registerChainTools(server: McpServer): void {
         return fail(
           null,
           `"${id}" is not a valid program ID. Program IDs are lowercase, ` +
-            "may contain underscores and digits, and end in '.aleo' — e.g. 'credits.aleo'.",
+            "may contain underscores and digits, and end in '.aleo' - e.g. 'credits.aleo'.",
         );
       }
 
@@ -299,7 +299,7 @@ export function registerChainTools(server: McpServer): void {
           if (target > tip) {
             return fail(
               null,
-              `Block ${groupDigits(target)} does not exist yet — the current ` +
+              `Block ${groupDigits(target)} does not exist yet - the current ` +
                 `${net.name} tip is ${groupDigits(tip)}.`,
             );
           }
@@ -333,7 +333,7 @@ export function registerChainTools(server: McpServer): void {
       title: "Fetch a transaction",
       description:
         "Fetch an Aleo transaction by its ID (starts with 'at1'). Shows the " +
-        "transaction type and the transitions it executed — note that transition " +
+        "transaction type and the transitions it executed - note that transition " +
         "inputs and outputs may be private ciphertext.",
       inputSchema: {
         transaction_id: z.string().describe("Transaction ID starting with 'at1'."),

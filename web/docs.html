@@ -111,7 +111,7 @@
         <ul>
           <li><strong>Read-only by default.</strong> The chain tools hold no keys and sign nothing, so an agent cannot move funds with them.</li>
           <li><strong>Privacy analysis needs no keys at all.</strong> It is static analysis of deployed Aleo instructions.</li>
-          <li><strong>View-key tools are local only.</strong> They are never registered on the hosted surface. See <a href="#surfaces">Surfaces</a>.</li>
+          <li><strong>View-key tools run over stdio only.</strong> They are never registered on the hosted surface, so the bridge has no code path that could accept a view key. See <a href="#surfaces">Surfaces</a>. Two of the three are pure local computation and reach no network at all; <code>olex_true_balance</code> is the exception, since it must read the chain before it can decrypt anything.</li>
         </ul>
       </section>
 
@@ -407,7 +407,7 @@ npm run build</code></pre>
               <tr>
                 <td><code>true-balance</code></td>
                 <td><em><code>transaction_id</code></em>, <em><code>from_block</code></em>, <em><code>to_block</code></em></td>
-                <td>Computes a real total balance including private records. Local stdio only, since it needs a view key.</td>
+                <td>Computes a real total balance including private records. Stdio only, since it needs a view key.</td>
               </tr>
             </tbody>
           </table>
