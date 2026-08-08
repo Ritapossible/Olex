@@ -437,6 +437,12 @@ a { color: inherit; }
   border-radius: 999px; font-size: 11.5px; font-weight: 500;
   border: 1px solid var(--border); color: var(--text-muted);
 }
+/* View-key tools are not runnable in the browser by design; mark them so the
+   catalog does not read as a list of things the playground can do. */
+.card-tag.is-key {
+  border-color: color-mix(in srgb, var(--series-2) 45%, transparent);
+  color: var(--series-2);
+}
 
 /* ============================================================================
    install

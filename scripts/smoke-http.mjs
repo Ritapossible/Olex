@@ -92,8 +92,8 @@ try {
   const list = await post(port, { method: "tools/list" });
   check("200 OK", list.status === 200, `got ${list.status}`);
   check(
-    "returns 7 tools",
-    list.body?.tools?.length === 7,
+    "returns 10 tools",
+    list.body?.tools?.length === 10,
     `got ${list.body?.tools?.length}`,
   );
   const names = (list.body?.tools ?? []).map((t) => t.name);
@@ -101,6 +101,27 @@ try {
     "includes olex_network_status",
     names.includes("olex_network_status"),
   );
+  check(
+    "includes the privacy analyzer",
+    names.includes("olex_analyze_privacy"),
+  );
+
+  // The security boundary, asserted rather than assumed. View-key tools are not
+  // registered on this surface at all, so they must be absent from the catalog —
+  // not merely blocked at the ALLOWED_TOOLS gate.
+  console.log("\nview-key tools must not exist on the hosted surface");
+  for (const secret of [
+    "olex_decrypt_record",
+    "olex_true_balance",
+    "olex_view_key_address",
+  ]) {
+    check(`${secret} absent from tools/list`, !names.includes(secret));
+    const blocked = await post(port, {
+      tool: secret,
+      arguments: { view_key: "AViewKey1anything" },
+    });
+    check(`${secret} -> 404`, blocked.status === 404, `got ${blocked.status}`);
+  }
 
   console.log("\nolex_network_status (real testnet call)");
   const status = await post(port, { tool: "olex_network_status" });
@@ -205,6 +226,34 @@ try {
     "names transaction_id",
     /transaction_id/i.test(noTxId.body?.error ?? ""),
     noTxId.body?.error,
+  );
+
+  console.log("\nolex_analyze_privacy over the bridge");
+  const analyze = await post(port, {
+    tool: "olex_analyze_privacy",
+    arguments: { program_id: "credits.aleo" },
+  });
+  check("200 OK", analyze.status === 200, `got ${analyze.status}`);
+  check("not an error", analyze.body?.isError === false, text(analyze));
+  check(
+    "reports both private and public inputs",
+    /Private inputs: [1-9]/.test(text(analyze)) &&
+      /Public inputs: [1-9]/.test(text(analyze)),
+  );
+  check(
+    "flags public mapping writes",
+    /Public mapping writes: [1-9]/.test(text(analyze)),
+  );
+
+  console.log("\nolex_check_visibility over the bridge");
+  const vis = await post(port, {
+    tool: "olex_check_visibility",
+    arguments: { type: "credits.aleo/transfer_public.future" },
+  });
+  check(
+    "dotted future type reads as public (finalize)",
+    /public \(finalize\)/.test(text(vis)),
+    text(vis),
   );
 
   console.log("\nrejections");

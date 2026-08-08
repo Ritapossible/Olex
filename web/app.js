@@ -476,6 +476,38 @@ const TOOLS = {
     tool: "olex_convert_credits",
     args: ({ amount, from }) => compact({ amount, from }),
   },
+
+  // The privacy tools below are the key-free half of the feature. Their
+  // view-key counterparts (decryption, true balance) are deliberately absent:
+  // a view key must never be typed into a hosted page, so those exist only in
+  // the local stdio server and the bridge does not register them at all.
+  analyze: {
+    fields: [
+      { name: "program_id", label: "Program ID", placeholder: "credits.aleo", note: "lowercase, ends in .aleo" },
+      { name: "function_name", label: "Function", placeholder: "leave empty for the whole program", note: "optional", optional: true },
+    ],
+    example: { program_id: "credits.aleo" },
+    tool: "olex_analyze_privacy",
+    args: ({ program_id, function_name }) => compact({ program_id, function_name }),
+  },
+
+  txprivacy: {
+    fields: [
+      { name: "transaction_id", label: "Transaction ID", placeholder: "at1…", note: "starts with at1" },
+    ],
+    example: { transaction_id: "at1fv877phzw8hwmaguyhlar7gk364vu6ychecgnafdzv8xgaqlwqrqm9m73w" },
+    tool: "olex_explain_transaction_privacy",
+    args: ({ transaction_id }) => compact({ transaction_id }),
+  },
+
+  visibility: {
+    fields: [
+      { name: "type", label: "Type annotation", placeholder: "u64.private", note: "e.g. address.public, token.record" },
+    ],
+    example: { type: "u64.private" },
+    tool: "olex_check_visibility",
+    args: ({ type }) => compact({ type }),
+  },
 };
 
 const CATALOG = [
@@ -486,6 +518,12 @@ const CATALOG = [
   ["olex_get_block", "Any block by height, or the chain tip, with its transaction list.", "read"],
   ["olex_get_transaction", "A transaction by ID, with its transitions and how many inputs were private.", "read"],
   ["olex_convert_credits", "Exact bigint conversion between credits and microcredits.", "util"],
+  ["olex_analyze_privacy", "Static analysis of where a program's private/public boundary really falls, including private inputs that leak into public mapping state.", "read"],
+  ["olex_explain_transaction_privacy", "Value by value, what a real transaction exposed on-chain and what stayed encrypted.", "read"],
+  ["olex_check_visibility", "What a type annotation like u64.private or credits.aleo/transfer_public.future actually means.", "util"],
+  ["olex_decrypt_record", "Decrypt a record ciphertext with your view key — the one thing no block explorer can do. Local stdio only.", "key"],
+  ["olex_true_balance", "Your real balance: public credits plus the private records you own. Local stdio only.", "key"],
+  ["olex_view_key_address", "Confirm a view key is valid and show which account it unlocks. Local stdio only.", "key"],
 ];
 
 let activeTool = "status";
@@ -652,8 +690,13 @@ function renderCatalog() {
     d.textContent = desc;
 
     const t = document.createElement("span");
-    t.className = "card-tag";
-    t.textContent = tag === "read" ? "read-only · no keys" : "local · no network";
+    t.className = tag === "key" ? "card-tag is-key" : "card-tag";
+    t.textContent =
+      tag === "read"
+        ? "read-only · no keys"
+        : tag === "key"
+          ? "view key · local only"
+          : "local · no network";
 
     card.append(n, d, t);
     wrap.appendChild(card);

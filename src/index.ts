@@ -12,10 +12,16 @@
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createServer, VERSION } from "./server.js";
+import { registerVaultTools } from "./tools/vault.js";
 import { DEFAULT_NETWORK } from "./lib/network.js";
 
 async function main(): Promise<void> {
-  const server = createServer();
+  // View-key tools are registered here rather than inside createServer(), so
+  // the hosted bridge — which imports createServer and nothing else — cannot
+  // reach them and does not bundle the WASM cryptography they need.
+  const server = createServer({ viewKeyTools: true });
+  registerVaultTools(server);
+
   const transport = new StdioServerTransport();
 
   await server.connect(transport);
