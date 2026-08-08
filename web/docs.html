@@ -84,6 +84,7 @@
       <ol>
         <li><a href="#overview">Overview</a></li>
         <li><a href="#install">Install</a></li>
+        <li><a href="#config-shapes">Config shapes</a></li>
         <li><a href="#configuration">Configuration</a></li>
         <li><a href="#privacy-model">Privacy model</a></li>
         <li><a href="#tools-reference">Tool reference</a></li>
@@ -128,20 +129,82 @@ npm run build</code></pre>
             </div>
           </li>
           <li>
-            <div class="step-title">Register with Claude Code</div>
+            <div class="step-title">Register with your client</div>
+            <p>
+              Claude Code and Codex can write their own config. Everything else
+              is a file you edit by hand.
+            </p>
             <div class="code-card">
-              <pre class="code"><code>claude mcp add olex -- node /abs/path/olex/dist/index.js</code></pre>
+              <pre class="code"><code>claude mcp add olex -- node /abs/path/olex/dist/index.js   # Claude Code
+codex mcp add olex -- node /abs/path/olex/dist/index.js    # Codex CLI</code></pre>
             </div>
-            <p>Or add it to any MCP client config by hand:</p>
-            <div class="code-card">
-              <pre class="code"><code>{
-  "mcpServers": {
-    "olex": {
-      "command": "node",
-      "args": ["/abs/path/olex/dist/index.js"]
-    }
-  }
-}</code></pre>
+            <p>
+              For the rest, find your client below, then paste the matching
+              block from <a href="#config-shapes">config shapes</a>. The
+              <strong>key</strong> column is the part people get wrong - a
+              correct-looking block under the wrong key fails silently, with the
+              server simply absent from the tool list.
+            </p>
+            <div class="doc-table-wrap">
+              <table class="doc-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Client</th>
+                    <th scope="col">Config file</th>
+                    <th scope="col">Key</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Claude Code</td>
+                    <td><code>claude mcp add</code>, or <code>.mcp.json</code> in the project</td>
+                    <td><code>mcpServers</code></td>
+                  </tr>
+                  <tr>
+                    <td>Claude Desktop</td>
+                    <td>
+                      <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>
+                      on macOS, <code>%APPDATA%\Claude\claude_desktop_config.json</code> on Windows
+                    </td>
+                    <td><code>mcpServers</code></td>
+                  </tr>
+                  <tr>
+                    <td>Cursor</td>
+                    <td><code>~/.cursor/mcp.json</code> globally, <code>.cursor/mcp.json</code> per project</td>
+                    <td><code>mcpServers</code></td>
+                  </tr>
+                  <tr>
+                    <td>VS Code</td>
+                    <td><code>.vscode/mcp.json</code>, or <em>MCP: Open User Configuration</em></td>
+                    <td><code>servers</code></td>
+                  </tr>
+                  <tr>
+                    <td>Windsurf</td>
+                    <td><code>~/.codeium/windsurf/mcp_config.json</code></td>
+                    <td><code>mcpServers</code></td>
+                  </tr>
+                  <tr>
+                    <td>Codex CLI</td>
+                    <td><code>~/.codex/config.toml</code></td>
+                    <td><code>mcp_servers</code> (TOML)</td>
+                  </tr>
+                  <tr>
+                    <td>Gemini CLI</td>
+                    <td><code>~/.gemini/settings.json</code></td>
+                    <td><code>mcpServers</code></td>
+                  </tr>
+                  <tr>
+                    <td>Zed</td>
+                    <td><code>settings.json</code>, via <em>zed: open settings</em></td>
+                    <td><code>context_servers</code></td>
+                  </tr>
+                  <tr>
+                    <td>Cline / Roo Code</td>
+                    <td><code>cline_mcp_settings.json</code> / <code>mcp_settings.json</code></td>
+                    <td><code>mcpServers</code></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </li>
           <li>
@@ -155,7 +218,102 @@ npm run build</code></pre>
         </ol>
         <p>
           The path must be absolute. A client launches the server from its own
-          working directory, not yours.
+          working directory, not yours. On Windows, either escape the separators
+          (<code>C:\\path\\to\\olex\\dist\\index.js</code>) or use forward
+          slashes - Node accepts both, but a single backslash in JSON is an
+          escape character and will not survive parsing.
+        </p>
+      </section>
+
+      <section class="doc-section" id="config-shapes">
+        <h2>Config shapes</h2>
+        <p>
+          Three shapes cover every client. They are not interchangeable: the
+          block is identical, the key around it is not.
+        </p>
+
+        <h3>Most clients</h3>
+        <p>
+          Claude Code, Claude Desktop, Cursor, Windsurf, Gemini CLI, Cline and
+          anything else that follows the reference format.
+        </p>
+        <div class="code-card">
+          <pre class="code"><code>{
+  "mcpServers": {
+    "olex": {
+      "command": "node",
+      "args": ["/abs/path/olex/dist/index.js"],
+      "env": { "OLEX_NETWORK": "testnet" }
+    }
+  }
+}</code></pre>
+        </div>
+
+        <h3>VS Code</h3>
+        <p>
+          The top-level key is <code>servers</code>, and each entry carries an
+          explicit <code>type</code>.
+        </p>
+        <div class="code-card">
+          <pre class="code"><code>{
+  "servers": {
+    "olex": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/abs/path/olex/dist/index.js"],
+      "env": { "OLEX_NETWORK": "testnet" }
+    }
+  }
+}</code></pre>
+        </div>
+
+        <h3>Zed</h3>
+        <p>
+          Zed calls them context servers and speaks stdio only, which suits Olex
+          exactly.
+        </p>
+        <div class="code-card">
+          <pre class="code"><code>{
+  "context_servers": {
+    "olex": {
+      "command": "node",
+      "args": ["/abs/path/olex/dist/index.js"],
+      "env": { "OLEX_NETWORK": "testnet" }
+    }
+  }
+}</code></pre>
+        </div>
+
+        <h3>Codex CLI</h3>
+        <p>TOML rather than JSON, and the key is snake_case.</p>
+        <div class="code-card">
+          <pre class="code"><code>[mcp_servers.olex]
+command = "node"
+args = ["/abs/path/olex/dist/index.js"]
+env = { OLEX_NETWORK = "testnet" }</code></pre>
+        </div>
+
+        <div class="callout is-key">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M15 7a4 4 0 1 1-3.5 5.9L9 15.4V18H6v3H3v-3.6l6.1-6.1A4 4 0 0 1 15 7Z"/>
+          </svg>
+          <div>
+            <div class="callout-title">Adding a view key</div>
+            <p>
+              To enable the view-key tools, add <code>OLEX_VIEW_KEY</code> to the
+              same <code>env</code> block. Every client above launches Olex over
+              stdio on your own machine, so the key never leaves it. Bear in mind
+              the config file is plain text on disk - if that is not where you
+              want a view key to live, set the variable in the shell you launch
+              the client from instead.
+            </p>
+          </div>
+        </div>
+
+        <p>
+          Whichever client you use, restart it after editing the file. Most read
+          their MCP config only at startup, and Windsurf needs a full quit rather
+          than just a closed window.
         </p>
       </section>
 

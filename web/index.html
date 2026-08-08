@@ -249,7 +249,7 @@
       <p class="ink-2">Olex speaks MCP over stdio. There is no server to host - your client launches it.</p>
     </div>
 
-    <div class="install-grid">
+    <div class="install-steps">
       <div class="code-card">
         <div class="code-head"><span>1 · Build</span></div>
         <pre class="code"><code>git clone &lt;your-repo&gt; olex
@@ -257,10 +257,20 @@ cd olex
 npm install
 npm run build</code></pre>
       </div>
-      <div class="code-card">
-        <div class="code-head"><span>2 · Register with Claude Code</span></div>
-        <pre class="code"><code>claude mcp add olex -- node /abs/path/olex/dist/index.js</code></pre>
+
+      <!-- Step 2 carries a client picker rather than one command: the syntax
+           differs per client, and a single snippet could only ever be right
+           for one of them. Tabs and panels are rendered from data in app.js. -->
+      <div class="code-card client-card">
+        <div class="code-head"><span>2 · Register with your client</span></div>
+        <div class="client-tabs" id="client-tabs" role="tablist" aria-label="MCP clients"></div>
+        <div class="client-panel" id="client-panel" role="tabpanel">
+          <p class="client-where" id="client-where"></p>
+          <pre class="code"><code id="client-code"></code></pre>
+          <p class="client-note ink-3" id="client-note"></p>
+        </div>
       </div>
+
       <div class="code-card">
         <div class="code-head"><span>3 · Ask</span></div>
         <pre class="code"><code>"What's the latest Aleo block height?"
@@ -268,6 +278,13 @@ npm run build</code></pre>
 "What's the public balance of aleo1rhg...?"</code></pre>
       </div>
     </div>
+
+    <p class="install-foot ink-2">
+      The path must be absolute. A client launches the server from its own
+      working directory, not yours - on Windows, write it as
+      <code>C:\\path\\to\\olex\\dist\\index.js</code> inside JSON.
+      Full reference in the <a href="./docs#install">docs</a>.
+    </p>
   </section>
 </main>
 

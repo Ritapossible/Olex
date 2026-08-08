@@ -154,13 +154,35 @@ npm install
 npm run build
 ```
 
-Register with Claude Code:
+Then register the built server with your client. Two of them can write their own
+config:
 
 ```bash
-claude mcp add olex -- node /absolute/path/to/olex/dist/index.js
+claude mcp add olex -- node /absolute/path/to/olex/dist/index.js   # Claude Code
+codex mcp add olex -- node /absolute/path/to/olex/dist/index.js    # Codex CLI
 ```
 
-Or add to your MCP client config manually:
+Everything else is a file you edit. Find your client, then use the matching
+shape below:
+
+| Client | Config file | Key |
+|---|---|---|
+| Claude Code | `claude mcp add`, or `.mcp.json` in the project | `mcpServers` |
+| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)<br>`%APPDATA%\Claude\claude_desktop_config.json` (Windows) | `mcpServers` |
+| Cursor | `~/.cursor/mcp.json`, or `.cursor/mcp.json` per project | `mcpServers` |
+| VS Code | `.vscode/mcp.json`, or *MCP: Open User Configuration* | `servers` |
+| Windsurf | `~/.codeium/windsurf/mcp_config.json` | `mcpServers` |
+| Codex CLI | `~/.codex/config.toml` | `mcp_servers` (TOML) |
+| Gemini CLI | `~/.gemini/settings.json` | `mcpServers` |
+| Zed | `settings.json`, via *zed: open settings* | `context_servers` |
+| Cline / Roo Code | `cline_mcp_settings.json` / `mcp_settings.json` | `mcpServers` |
+
+The key is the part that bites. A correct block under the wrong key fails
+silently - the client starts, reports nothing, and the server is simply absent
+from the tool list.
+
+**Most clients** - Claude Code, Claude Desktop, Cursor, Windsurf, Gemini CLI,
+Cline:
 
 ```json
 {
@@ -175,6 +197,60 @@ Or add to your MCP client config manually:
   }
 }
 ```
+
+**VS Code** - top-level `servers`, with an explicit `type`:
+
+```json
+{
+  "servers": {
+    "olex": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/absolute/path/to/olex/dist/index.js"],
+      "env": {
+        "OLEX_NETWORK": "testnet"
+      }
+    }
+  }
+}
+```
+
+**Zed** - context servers, stdio only, which is all Olex needs:
+
+```json
+{
+  "context_servers": {
+    "olex": {
+      "command": "node",
+      "args": ["/absolute/path/to/olex/dist/index.js"],
+      "env": {
+        "OLEX_NETWORK": "testnet"
+      }
+    }
+  }
+}
+```
+
+**Codex CLI** - TOML, snake_case key:
+
+```toml
+[mcp_servers.olex]
+command = "node"
+args = ["/absolute/path/to/olex/dist/index.js"]
+env = { OLEX_NETWORK = "testnet" }
+```
+
+The path must be absolute: the client launches the server from its own working
+directory, not yours. On Windows, escape the separators
+(`C:\\path\\to\\olex\\dist\\index.js`) or use forward slashes - Node accepts
+both, but a lone backslash in JSON is an escape character and will not survive
+parsing. Restart the client after editing; most read MCP config only at startup,
+and Windsurf needs a full quit rather than a closed window.
+
+To enable the view-key tools, add `OLEX_VIEW_KEY` to the same `env` block. Every
+client here launches Olex over stdio on your own machine, so the key stays local
+- but the config file is plain text on disk, so if that is not where you want a
+view key, export the variable in the shell you launch the client from instead.
 
 Then ask your assistant:
 

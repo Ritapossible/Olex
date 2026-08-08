@@ -475,7 +475,40 @@ a { color: inherit; }
    install
    ========================================================================= */
 
-.install-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+/* One card per step, stacked; the middle card hosts the client tabs. */
+.install-steps { display: grid; gap: 16px; }
+
+/* The picker renders one snippet per client, because every client has its own
+   config file and three of them use a different top-level key. */
+.client-tabs {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 12px 16px 0;
+}
+.client-tab {
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--border); background: transparent;
+  font: inherit; font-size: 12.5px; font-weight: 500;
+  color: var(--text-secondary); cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.client-tab:hover { background: var(--surface-3); color: var(--text-primary); }
+/* Active state is fill + a stronger border, never hue alone, so it survives a
+   monochrome print and reads the same under any CVD. */
+.client-tab.is-active {
+  background: var(--surface-3); color: var(--text-primary);
+  border-color: var(--text-muted); font-weight: 600;
+}
+
+.client-panel { padding: 12px 16px 16px; }
+.client-where { font-size: 13px; color: var(--text-secondary); }
+.client-note { font-size: 12.5px; margin-top: 10px; }
+.install-foot { margin-top: 18px; font-size: 13.5px; line-height: 1.6; }
+.install-foot code {
+  font-family: var(--mono); font-size: 12px;
+  background: var(--surface-2); padding: 2px 6px;
+  border: 1px solid var(--border); border-radius: 4px;
+}
+.install-foot a { color: var(--series-1); }
 .code-card {
   background: var(--surface-1); border: 1px solid var(--border);
   border-radius: var(--radius); overflow: hidden;
@@ -509,7 +542,6 @@ a { color: inherit; }
   .hero { grid-template-columns: 1fr; gap: 40px; padding-block: 48px 40px; }
   .hero h1 { max-width: none; }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .install-grid { grid-template-columns: 1fr; }
   .play { grid-template-columns: 1fr; }
   /* A 2-column grid instead of a horizontal scroller: the scroller clipped
      tool names mid-word and hid options behind an edge with no affordance. */
@@ -613,6 +645,17 @@ a { color: inherit; }
   .field input, .field select { min-height: 46px; }
 
   .play-tool { min-height: 48px; justify-content: center; }
+
+  /* Pills are short strings, so height alone is not enough to clear 44px in
+     both axes - the narrow ones ("Zed", "Cursor") need the width too. */
+  .client-tab { min-height: 44px; min-width: 44px; padding-inline: 16px; }
+
+  /* The inline "docs" link grows into the paragraph's leading rather than
+     forcing the line taller, same trick as the links in the block feed. */
+  .install-foot a {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 44px; min-width: 44px; margin-block: -12px; padding-inline: 2px;
+  }
 
   .conn { min-height: 36px; }
 }
