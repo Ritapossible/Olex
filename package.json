@@ -1,7 +1,7 @@
 {
   "name": "olex",
   "version": "0.1.0",
-  "description": "Olex — the bridge between AI agents and Aleo's privacy ecosystem. An MCP server exposing Aleo blockchain capabilities as AI-callable tools.",
+  "description": "Olex - the bridge between AI agents and Aleo's privacy ecosystem. An MCP server exposing Aleo blockchain capabilities as AI-callable tools.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -18,7 +18,8 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "smoke:http": "node scripts/smoke-http.mjs"
   },
   "keywords": [
     "aleo",
