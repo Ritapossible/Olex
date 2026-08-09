@@ -24,7 +24,11 @@ const TYPES = {
 
 export function createStaticServer() {
   return http.createServer(async (req, res) => {
-    let path = decodeURIComponent(new URL(req.url, "http://x").pathname);
+    // Collapse leading slashes first: "//docs.html" parses as protocol-relative,
+    // which resolves to host "docs.html" and path "/", so the line below would
+    // hand back index.html with a 200 and hide the real request.
+    const target = req.url.replace(/^\/{2,}/, "/");
+    let path = decodeURIComponent(new URL(target, "http://x").pathname);
     if (path.endsWith("/")) path += "index.html";
     // cleanUrls: /docs -> docs.html, matching vercel.json
     if (!extname(path)) path += ".html";

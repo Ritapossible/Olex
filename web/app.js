@@ -20,6 +20,51 @@ const $ = (id) => document.getElementById(id);
 const groupDigits = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 /**
+ * A short form for numbers too wide to sit in a stat tile.
+ *
+ * Mainnet's proof target runs to 14 digits - 18,258,960,714,393 when probed on
+ * 2026-08-09; it drifts a little every block but not in length.
+ * Grouped, that is 170px of text in a 135px box on a 375px phone and 246px in a
+ * 219px box on a 1440px desktop - over at every width except 768px, because the
+ * tile is a quarter of the grid rather than a share of the viewport, so a wider
+ * screen does not mean a wider tile. Shrinking the type enough to fit would have
+ * taken it below the other tiles and broken the row's shared scale.
+ *
+ * So the headline carries the magnitude and the exact figure moves to the
+ * sub-line beneath it, where it measures 93px at 11px and 105px at 12.5px -
+ * inside the box everywhere. Nothing is lost: both numbers are on screen, in the
+ * order they get read in. Testnet's 9-digit target is under the threshold and
+ * stays exact in the headline, unchanged.
+ */
+const UNITS = [
+  { at: 1e12, suffix: "T" },
+  { at: 1e9, suffix: "B" },
+  { at: 1e6, suffix: "M" },
+];
+
+function compactNumber(n) {
+  for (const { at, suffix } of UNITS) {
+    if (n >= at) {
+      // Two decimals keeps 17.43T distinguishable from 17.40T; the target moves
+      // by fractions of a percent between blocks and a bare "17T" would look
+      // frozen when it is not.
+      return `${(n / at).toFixed(2)}${suffix}`;
+    }
+  }
+  return groupDigits(n);
+}
+
+/**
+ * Longest exact figure the tile can hold, in digits.
+ *
+ * Measured with all-9s, the widest decimals in this face, against the narrowest
+ * tile - 135px at 375px. Ten digits fit with 9px to spare; eleven are 2px over.
+ * The desktop tile is wider (219px) and takes twelve, but the limit has to hold
+ * at the tightest width or the number overflows on a phone, so it is 10.
+ */
+const TILE_DIGIT_LIMIT = 10;
+
+/**
  * GET a path on the active network.
  *
  * The generation guard exists because a switch cannot cancel a request that is
@@ -229,6 +274,12 @@ function readBlock(block) {
     timestamp: Number(meta.timestamp ?? 0),
     round: Number(meta.round ?? 0),
     proofTarget: Number(meta.proof_target ?? 0),
+    // The digits exactly as the API sent them. proof_target is a u64, so it can
+    // exceed what a double represents exactly - mainnet already runs to 14
+    // digits and the ceiling is 16. The Number above is fine for deciding
+    // magnitude, but a figure the tile presents as exact has to come from the
+    // response rather than from a round-trip that might have altered it.
+    proofTargetRaw: meta.proof_target == null ? "" : String(meta.proof_target),
     txs: Array.isArray(block?.transactions) ? block.transactions.length : 0,
     hash: block?.block_hash ?? "",
   };
@@ -251,7 +302,25 @@ function paintStats(b) {
       ? `none in the last ${feed.length} blocks`
       : `${groupDigits(windowTxs)} in the last ${feed.length} blocks`
     : "current block";
-  $("stat-proof").textContent = b.proofTarget ? groupDigits(b.proofTarget) : "-";
+  const proofEl = $("stat-proof");
+  const proofSub = $("stat-proof-sub");
+  if (!b.proofTarget) {
+    proofEl.textContent = "-";
+    proofEl.removeAttribute("title");
+    proofSub.textContent = "difficulty for provers";
+  } else {
+    const digits = b.proofTargetRaw || String(b.proofTarget);
+    const exact = groupDigits(digits);
+    const long = digits.length > TILE_DIGIT_LIMIT;
+    proofEl.textContent = long ? compactNumber(b.proofTarget) : exact;
+    // The headline is rounded when compacted, so the exact figure has to remain
+    // reachable - in the sub-line for sighted readers, and as a title for the
+    // hover case. Screen readers get the exact number either way: the sub-line
+    // is real text in the tile, not a decoration.
+    proofSub.textContent = long ? exact : "difficulty for provers";
+    if (long) proofEl.title = `${exact} - difficulty for provers`;
+    else proofEl.removeAttribute("title");
+  }
 
   // Average over the feed, not the gap between the last two polls: polling is
   // slower than block production, so a poll-to-poll delta overstates the

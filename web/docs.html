@@ -40,6 +40,7 @@
     </nav>
 
     <div class="topbar-right">
+      <div class="net-switch" id="net-switch"></div>
       <a class="icon-btn gh-link" href="https://github.com/Ritapossible/olex" target="_blank"
          rel="noopener" aria-label="Olex on GitHub" title="Olex on GitHub">
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -249,7 +250,7 @@ codex mcp add olex -- node /abs/path/olex/dist/index.js    # Codex CLI</code></p
     "olex": {
       "command": "node",
       "args": ["/abs/path/olex/dist/index.js"],
-      "env": { "OLEX_NETWORK": "testnet" }
+      "env": { "OLEX_NETWORK": "<span data-net-name>testnet</span>" }
     }
   }
 }</code></pre>
@@ -267,7 +268,7 @@ codex mcp add olex -- node /abs/path/olex/dist/index.js    # Codex CLI</code></p
       "type": "stdio",
       "command": "node",
       "args": ["/abs/path/olex/dist/index.js"],
-      "env": { "OLEX_NETWORK": "testnet" }
+      "env": { "OLEX_NETWORK": "<span data-net-name>testnet</span>" }
     }
   }
 }</code></pre>
@@ -284,7 +285,7 @@ codex mcp add olex -- node /abs/path/olex/dist/index.js    # Codex CLI</code></p
     "olex": {
       "command": "node",
       "args": ["/abs/path/olex/dist/index.js"],
-      "env": { "OLEX_NETWORK": "testnet" }
+      "env": { "OLEX_NETWORK": "<span data-net-name>testnet</span>" }
     }
   }
 }</code></pre>
@@ -296,7 +297,7 @@ codex mcp add olex -- node /abs/path/olex/dist/index.js    # Codex CLI</code></p
           <pre class="code"><code>[mcp_servers.olex]
 command = "node"
 args = ["/abs/path/olex/dist/index.js"]
-env = { OLEX_NETWORK = "testnet" }</code></pre>
+env = { OLEX_NETWORK = "<span data-net-name>testnet</span>" }</code></pre>
         </div>
 
         <div class="callout is-key">
@@ -651,7 +652,7 @@ npm run inspect    # opens the official MCP Inspector web UI</code></pre>
       <a class="foot-link" href="https://github.com/Ritapossible/olex" target="_blank" rel="noopener">Source on GitHub</a>
       · MIT
     </span>
-    <span class="ink-3">Data: public Provable API · testnet</span>
+    <span class="ink-3" id="foot-network">Data: public Provable API · testnet</span>
   </div>
 </footer>
 

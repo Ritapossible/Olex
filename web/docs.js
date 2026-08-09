@@ -3,7 +3,7 @@
  * where the reader actually is.
  */
 
-import { initTheme, initMobileNav } from "./theme.js";
+import { initTheme, initMobileNav, initNetworkSwitch, storedNetwork } from "./theme.js";
 
 /**
  * Mark the section currently being read in the table of contents.
@@ -59,6 +59,33 @@ function initScrollSpy() {
   for (const section of byId.keys()) observer.observe(section);
 }
 
+/**
+ * Point the docs at whichever network the reader picked.
+ *
+ * The install snippets are the reason this matters. Someone reading on mainnet
+ * and pasting a config that pins OLEX_NETWORK to testnet gets a server on the
+ * wrong chain, and nothing in the snippet would tell them why. The switch is
+ * shared with the dashboard through localStorage, so a choice made on either
+ * page holds on the other.
+ *
+ * Text swaps only - no element is added or removed, so the reader's scroll
+ * position and the table of contents stay put.
+ *
+ * Deliberately not swapped: the "Default network" badge and the OLEX_NETWORK
+ * row in the env table. Those state what the server does when you set nothing
+ * (src/lib/network.ts falls back to testnet), which is true no matter what the
+ * reader has selected here. Following the switch would turn them into a lie.
+ */
+function paintNetwork(name) {
+  for (const el of document.querySelectorAll("[data-net-name]")) {
+    el.textContent = name;
+  }
+  const foot = document.getElementById("foot-network");
+  if (foot) foot.textContent = `Data: public Provable API · ${name}`;
+}
+
 initTheme();
 initMobileNav();
 initScrollSpy();
+paintNetwork(storedNetwork());
+initNetworkSwitch(paintNetwork);
