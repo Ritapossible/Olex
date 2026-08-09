@@ -343,8 +343,10 @@ env = { OLEX_NETWORK = "testnet" }</code></pre>
               </tr>
               <tr>
                 <td><code>OLEX_TIMEOUT_MS</code></td>
-                <td><code>15000</code></td>
-                <td>Per-request timeout against the Aleo REST API.</td>
+                <td><code>15000</code> testnet<br /><code>45000</code> mainnet</td>
+                <td>Per-request timeout against the Aleo REST API. Mainnet gets the
+                  longer budget because a cold mainnet request can take upwards of
+                  20 seconds. Setting this overrides both defaults.</td>
               </tr>
               <tr>
                 <td><code>OLEX_VIEW_KEY</code></td>

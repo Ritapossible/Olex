@@ -208,6 +208,36 @@ project from a weekend script.
 
 ---
 
+## Optional - the network switch (10 seconds, anywhere after section 3)
+
+Worth 10 seconds because "works on mainnet" is a question a judge will have,
+and answering it before they ask is cheaper than answering it after.
+
+**Screen:** The dashboard. Click the network switch from Testnet to Mainnet and
+let the height repaint.
+
+**Say:**
+
+> Same tools, either network. Testnet is the default deliberately - pointing an
+> autonomous agent at mainnet should be a decision, not a drift.
+
+**Real captured mainnet output**, for reference - read your own screen, this
+moves:
+
+```
+**Aleo mainnet - online**
+- Latest block: **20,933,704**
+- Round: 42,328,594
+- Proof target: 17,434,525,950,403
+```
+
+**Accuracy note:** mainnet's first call can be slow - one cold request took
+**19.3 seconds**, above the 15-second default timeout. Set
+`OLEX_TIMEOUT_MS=45000` before recording, and warm the switch once so the demo
+call hits a warm path.
+
+---
+
 ## Section 6 - Close (2:40 - 3:00)
 
 **Screen:** The dashboard, live block height ticking. Or the GitHub repo page.
@@ -232,9 +262,10 @@ MCP server for Aleo - 13 tools, MIT
 
 ## Things to avoid
 
-- **Don't claim it's on mainnet.** Testnet is the default and the honest framing.
 - **Don't say "production ready."** Say what's true: verified against live
-  testnet, covered by smoke tests.
+  testnet and mainnet, covered by smoke tests.
+- **Don't claim you've deployed anything to mainnet.** Reading mainnet and
+  writing to it are different claims. Olex only reads.
 - **Don't demo Leo compile / deploy / execute.** Those are blocked on the Leo
   CLI and are marked as such in the README. Demoing a gap invites a question you
   can't answer well.

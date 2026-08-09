@@ -6,10 +6,11 @@
  * number on this page is live chain data; nothing here is seeded or faked.
  */
 
-import { initTheme, initMobileNav } from "./theme.js";
+import { initTheme, initMobileNav, initNetworkSwitch, NETWORKS, storedNetwork } from "./theme.js";
 
-const API = "https://api.explorer.provable.com/v1/testnet";
-const EXPLORER = "https://testnet.aleoscan.io";
+/* The selected network. Every request and every explorer link reads through
+   this, so a switch cannot leave one of them pointing at the other chain. */
+let net = NETWORKS[storedNetwork()];
 const POLL_MS = 15_000;
 const FEED_SIZE = 12;
 
@@ -18,18 +19,41 @@ const FEED_SIZE = 12;
 const $ = (id) => document.getElementById(id);
 const groupDigits = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-async function api(path, { timeout = 12_000 } = {}) {
+/**
+ * GET a path on the active network.
+ *
+ * The generation guard exists because a switch cannot cancel a request that is
+ * already in flight. Without it, a testnet response landing after the user
+ * moved to mainnet would paint testnet heights under a Mainnet label - the
+ * exact confusion the switch is meant to remove. Each response is checked
+ * against the generation it was issued under and dropped if that has moved on.
+ */
+let generation = 0;
+
+async function api(path, { timeout = net.timeout } = {}) {
+  const issuedAt = generation;
+  const base = net.api;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   try {
-    const res = await fetch(`${API}${path}`, { signal: ctrl.signal });
+    const res = await fetch(`${base}${path}`, { signal: ctrl.signal });
     const text = await res.text();
+    if (issuedAt !== generation) throw new StaleResponse();
     if (!res.ok) throw new Error(`${res.status} - ${text.slice(0, 160)}`);
     try { return JSON.parse(text); } catch { return text; }
   } finally {
     clearTimeout(timer);
   }
 }
+
+/** Thrown when a response outlived the network it was requested for. */
+class StaleResponse extends Error {
+  constructor() {
+    super("superseded by a network switch");
+    this.name = "StaleResponse";
+  }
+}
+
 
 /** Strip an Aleo type suffix: "538849u64" -> 538849n. null for absent. */
 function parseTypedInt(raw) {
@@ -72,9 +96,10 @@ function setConn(state, label) {
 /* ── sparkline: seconds between blocks, single series ─────────────────── */
 /* One series, so no legend box - the caption names it. Hover shows values,
    which is why only the endpoint carries a direct label.
-   Plotting block interval rather than transaction count: testnet blocks are
-   usually empty, so a tx series is a flat zero line that reads as a broken
-   chart. Interval always varies and is the number an operator actually reads. */
+   Plotting block interval rather than transaction count: Aleo blocks are
+   usually empty on testnet and often sparse on mainnet, so a tx series is a
+   flat zero line that reads as a broken chart. Interval always varies and is
+   the number an operator actually reads. */
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -172,7 +197,7 @@ function paintFeed(newHeights = new Set()) {
 
     const h = document.createElement("td");
     const link = document.createElement("a");
-    link.href = `${EXPLORER}/block/${b.height}`;
+    link.href = `${net.explorer}/block/${b.height}`;
     link.target = "_blank";
     link.rel = "noopener";
     link.textContent = groupDigits(b.height);
@@ -216,10 +241,10 @@ function paintStats(b) {
   $("stat-round-sub").textContent = `block ${groupDigits(b.height)}`;
   $("stat-txs").textContent = b.txs;
 
-  // Aleo testnet produces blocks on a schedule whether or not anyone submitted
-  // a transaction, so this tile reads 0 for long stretches. On its own that is
-  // indistinguishable from a broken reader, so say how many the recent window
-  // carried - a real zero and a stuck one then look different.
+  // Aleo produces blocks on a schedule whether or not anyone submitted a
+  // transaction, so this tile reads 0 for long stretches on both networks. On
+  // its own that is indistinguishable from a broken reader, so say how many the
+  // recent window carried - a real zero and a stuck one then look different.
   const windowTxs = feed.reduce((sum, blk) => sum + (blk.txs ?? 0), 0);
   $("stat-txs-sub").textContent = feed.length
     ? windowTxs === 0
@@ -252,6 +277,7 @@ function paintStats(b) {
  * caller, rows fill in progressively, and a wholesale failure reports itself.
  */
 async function bootstrapFeed(tipHeight) {
+  const issuedAt = generation;
   const heights = [];
   for (let i = 0; i < FEED_SIZE; i++) heights.push(tipHeight - i);
 
@@ -261,6 +287,7 @@ async function bootstrapFeed(tipHeight) {
     heights.map((h) =>
       api(`/block/${h}`)
         .then((raw) => {
+          if (issuedAt !== generation) return;
           const block = readBlock(raw);
           if (!block.height) return;
           if (feed.some((b) => b.height === block.height)) return;
@@ -271,10 +298,18 @@ async function bootstrapFeed(tipHeight) {
           if (feed.length > 1) renderSpark([...feed].reverse());
         })
         .catch(() => {
-          /* One missing block must not empty the table. */
+          /* One missing block must not empty the table. A stale response is
+             swallowed here too: the switch has already reset the feed. */
         }),
     ),
   );
+
+  // A switch during the backfill makes every conclusion below wrong: the empty
+  // feed is the new network's, not a failure of this one, and writing either
+  // message here would clobber the "Loading ..." row the switch just put up.
+  // The individual responses are already discarded as StaleResponse; this
+  // covers the summary that runs after they settle.
+  if (issuedAt !== generation) return;
 
   // Nothing arrived and the caller had no tip to seed: say so instead of
   // leaving a skeleton row that reads as a hung page.
@@ -317,12 +352,59 @@ function appendFeedNote(message) {
   body.appendChild(tr);
 }
 
+/**
+ * Move the dashboard to another network.
+ *
+ * Everything derived from the old chain is dropped rather than left to be
+ * overwritten: mainnet is at ~20.9M blocks and testnet at ~18.6M, so a stale
+ * row or sparkline point would not merely be out of date, it would be from a
+ * different chain. Bumping the generation invalidates in-flight requests, and
+ * the labels are repainted immediately so the header never disagrees with the
+ * switch while the first request is still open.
+ */
+function switchNetwork(name) {
+  if (!NETWORKS[name] || name === net.name) return;
+
+  net = NETWORKS[name];
+  generation++;
+
+  feed = [];
+  lastTimestamp = null;
+  $("spark").textContent = "";
+  paintNetworkLabels();
+
+  for (const id of ["stat-round", "stat-txs", "stat-proof", "stat-time"]) {
+    $(id).textContent = "-";
+  }
+  // The sub-lines carry chain-specific numbers too - "block 18,600,431", "none
+  // in the last 12 blocks" - so clearing only the headline values would leave
+  // testnet figures sitting under mainnet ones. They are re-derived on the
+  // first paint; until then they read as pending rather than as stale fact.
+  for (const id of ["stat-round-sub", "stat-txs-sub", "stat-time-sub"]) {
+    $(id).textContent = "-";
+  }
+  $("hero-height").textContent = "-";
+  $("hero-status").textContent = `reading ${net.name}...`;
+  setConn("connecting", `Connecting to ${net.name}...`);
+  showFeedMessage(`Loading ${net.name} blocks...`);
+
+  tick(true);
+}
+
+/** Repaint every piece of copy that names the network. */
+function paintNetworkLabels() {
+  const label = $("hero-fig-label");
+  if (label) label.textContent = `Aleo ${net.name} block height`;
+  const foot = $("foot-network");
+  if (foot) foot.textContent = `Data: public Provable API · ${net.name}`;
+}
+
 async function tick(first = false) {
   try {
     const block = readBlock(await api("/block/latest"));
     if (!block.height) throw new Error("no height in block response");
 
-    setConn("live", "Live · testnet");
+    setConn("live", `Live · ${net.name}`);
 
     if (first) {
       paintStats(block);
@@ -335,7 +417,12 @@ async function tick(first = false) {
         paintFeed();
       }
 
+      const issuedAt = generation;
       await bootstrapFeed(block.height);
+      // The backfill is the one await long enough for a switch to land inside
+      // it. `block` belongs to the network we started on, so repainting stats
+      // from it now would put the old chain's height under the new label.
+      if (issuedAt !== generation) return;
       paintStats(block);   // feed now has history, so block time can resolve
       return;
     }
@@ -350,10 +437,15 @@ async function tick(first = false) {
     paintStats(block);
     lastTimestamp = block.timestamp;
   } catch (err) {
+    // A response discarded by a network switch is not a failure - the switch
+    // already started a fresh poll, and reporting "connection lost" here would
+    // flash an error on a network that is about to paint normally.
+    if (err instanceof StaleResponse) return;
+
     setConn("error", "Connection lost");
     // A failed poll must not leave the table claiming it is still loading.
     if (!feed.length) {
-      showFeedMessage("Could not reach the Aleo API. Retrying automatically...");
+      showFeedMessage(`Could not reach the Aleo ${net.name} API. Retrying automatically...`);
       $("hero-status").textContent = "network unreachable";
     }
     console.error("[olex] poll failed:", err);
@@ -406,6 +498,13 @@ async function mcp(tool, args = {}) {
   if (payload?.isError) throw new Error(text || "The tool reported an error.");
   return { text: text || "(the tool returned no output)", ms: payload?.elapsedMs };
 }
+
+/* These two are pure local computation - unit conversion and resolving a type
+   annotation - so they have no network parameter to set. Every other tool on
+   this surface reads the chain and takes one. Sending `network` to a tool whose
+   schema has no such field is exactly the kind of thing that comes back as a
+   raw -32602, so the set is explicit rather than inferred. */
+const LOCAL_TOOLS = new Set(["olex_convert_credits", "olex_check_visibility"]);
 
 /** Drop keys the user left blank so optional fields stay absent. */
 function compact(obj) {
@@ -656,7 +755,12 @@ async function runTool(event) {
     const gap = missingRequired(spec, values);
     if (gap) throw new Error(gap);
 
-    const { text, ms } = await mcp(spec.tool, spec.args(values));
+    // Run against whichever network the switch is on, so the playground and the
+    // live section can never be reporting different chains at the same time.
+    const args = spec.args(values);
+    if (!LOCAL_TOOLS.has(spec.tool)) args.network = net.name;
+
+    const { text, ms } = await mcp(spec.tool, args);
     out.innerHTML = renderToolMarkdown(text);
     timing.textContent = `${ms ?? Math.round(performance.now() - started)} ms`;
   } catch (err) {
@@ -876,6 +980,8 @@ function boot() {
     if (feed.length) renderSpark([...feed].reverse());
   });
   initMobileNav();
+  initNetworkSwitch(switchNetwork);
+  paintNetworkLabels();
   renderCatalog();
   renderClients();
   renderFields();

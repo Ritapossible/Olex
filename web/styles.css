@@ -162,6 +162,37 @@ a { color: inherit; }
 .conn[data-state="live"] { color: var(--text-primary); }
 .conn[data-state="error"] .conn-dot { background: var(--critical); }
 
+/* The network switch: two options, both always readable.
+   A single toggle would show the active state but never name the alternative,
+   and "which chain is this" is not a question to leave to inference. The active
+   option carries a filled surface, a border and a weight change - hue is never
+   the only thing marking it. */
+.net-switch {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px; border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  flex: none;
+}
+.net-opt {
+  appearance: none;
+  display: inline-grid; place-items: center;
+  padding: 4px 11px; border-radius: 999px;
+  border: 1px solid transparent;
+  background: none; color: var(--text-secondary);
+  font: inherit; font-size: 12.5px; font-weight: 500;
+  white-space: nowrap; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.net-opt:hover { color: var(--text-primary); }
+.net-opt.is-active {
+  background: var(--surface-1);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 .btn-ghost {
   display: inline-grid; place-items: center;
   min-height: 36px; padding: 0 12px;
@@ -205,6 +236,13 @@ a { color: inherit; }
 @media (pointer: coarse) {
   .btn-ghost { min-height: 44px; padding-inline: 14px; }
   .icon-btn { width: 44px; height: 44px; }
+
+  /* The switch options are real buttons and have to clear 44px in both axes
+     like every other control. The container gives up its 2px of padding so the
+     group lands at 48px rather than 50px, keeping it close to the 44px icon
+     buttons beside it instead of becoming the tallest thing in the bar. */
+  .net-switch { padding: 1px; }
+  .net-opt { min-height: 44px; min-width: 44px; padding-inline: 12px; }
 }
 
 /* ============================================================================
@@ -588,6 +626,21 @@ a { color: inherit; }
      thing in the bar because the footer carries it as text on every page.
      Collapsing the pill alone no longer buys back enough width here. */
   .gh-link { display: none; }
+
+  /* The switch stays - it is the only place the network can be changed, and the
+     footer names the active one but cannot change it. It gives up padding
+     instead, which is enough because the pill and the repo link above have
+     already freed the width. */
+  .net-opt { padding: 4px 8px; font-size: 12px; }
+}
+
+/* Under ~380px even the shortened switch competes with the brand, so drop the
+   inactive option and keep the active one as a tappable pill. The alternative
+   name is lost, so the group gets an explicit accessible name here - "Testnet"
+   alone would otherwise read as a label rather than a control. */
+@media (max-width: 380px) {
+  .net-opt { display: none; }
+  .net-opt.is-active { display: inline-grid; }
 }
 
 @media (max-width: 560px) {

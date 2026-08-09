@@ -51,7 +51,33 @@ export class AleoApiError extends Error {
   }
 }
 
-const TIMEOUT_MS = Number(process.env.OLEX_TIMEOUT_MS ?? 15_000);
+/**
+ * Per-request budget, per network.
+ *
+ * Mainnet is materially slower than testnet: a cold mainnet request measured
+ * 19.3s against the flat 15s budget this used to apply everywhere, which
+ * surfaced to the caller as a timeout on a network that was in fact fine.
+ * Testnet has never needed more than a couple of seconds, so it keeps the
+ * shorter budget - a genuine outage there still reports itself quickly instead
+ * of hanging for three quarters of a minute.
+ *
+ * OLEX_TIMEOUT_MS overrides both when set, so anyone who has already tuned it
+ * keeps exactly the behaviour they configured.
+ */
+const TIMEOUT_OVERRIDE_MS = process.env.OLEX_TIMEOUT_MS
+  ? Number(process.env.OLEX_TIMEOUT_MS)
+  : null;
+
+const DEFAULT_TIMEOUT_MS: Record<NetworkName, number> = {
+  testnet: 15_000,
+  mainnet: 45_000,
+};
+
+function timeoutFor(net: NetworkConfig): number {
+  return TIMEOUT_OVERRIDE_MS && Number.isFinite(TIMEOUT_OVERRIDE_MS)
+    ? TIMEOUT_OVERRIDE_MS
+    : DEFAULT_TIMEOUT_MS[net.name];
+}
 
 /**
  * GET a path relative to the network's API root.
@@ -65,8 +91,9 @@ export async function apiGet<T = unknown>(
   path: string,
 ): Promise<T> {
   const url = `${net.api}${path}`;
+  const timeoutMs = timeoutFor(net);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   let res: Response;
   try {
@@ -77,7 +104,7 @@ export async function apiGet<T = unknown>(
   } catch (err) {
     const reason =
       err instanceof Error && err.name === "AbortError"
-        ? `timed out after ${TIMEOUT_MS}ms`
+        ? `timed out after ${timeoutMs}ms`
         : err instanceof Error
           ? err.message
           : String(err);

@@ -187,8 +187,34 @@ for (const vp of VIEWPORTS) {
     themeBtn?.click();
     const after = document.documentElement.dataset.theme;
     themeBtn?.click(); // back to the original
+
+    /* The network switch. Below 380px the inactive option is hidden and the
+       visible pill cycles instead, so "click the other one" is not a test that
+       works at every viewport - drive whichever option is actually clickable
+       and assert that the active network moved. */
+    const opts = [...document.querySelectorAll(".net-opt")];
+    const activeNet = () =>
+      document.querySelector(".net-opt.is-active")?.dataset.net ?? null;
+    const netBefore = activeNet();
+    const clickable = opts.find((o) => o.offsetParent !== null && !o.classList.contains("is-active"))
+      ?? opts.find((o) => o.offsetParent !== null);
+    clickable?.click();
+    const netAfter = activeNet();
+    const checkedCount = opts.filter((o) => o.getAttribute("aria-checked") === "true").length;
+    const role = document.getElementById("net-switch")?.getAttribute("role") ?? null;
+    /* Restore. Clicking `clickable` again is a no-op - it is the active option
+       now, and the switch ignores a switch to the network it is already on - so
+       drive the option that carries the original network instead. Leaving this
+       on the wrong chain aborts the in-flight poll for the other one, which
+       lands as a console error and a failed request later in the audit. */
+    if (netAfter !== netBefore) {
+      opts.find((o) => o.dataset.net === netBefore)?.click();
+    }
+
     return {
       hasNavBtn: !!navBtn, open, closedAfterLink, before, after,
+      netOpts: opts.length, netBefore, netAfter, checkedCount, role,
+      netRestored: activeNet() === netBefore,
     };
   });
 
@@ -199,6 +225,15 @@ for (const vp of VIEWPORTS) {
       ? "PASS" : "FAIL",
     `index: theme toggle flips (${toggleReport.before} -> ${toggleReport.after})`,
   );
+  note(toggleReport.netOpts === 2 ? "PASS" : "FAIL", `index: network options = ${toggleReport.netOpts}/2`);
+  note(
+    toggleReport.netBefore && toggleReport.netAfter && toggleReport.netBefore !== toggleReport.netAfter
+      ? "PASS" : "FAIL",
+    `index: network switch flips (${toggleReport.netBefore} -> ${toggleReport.netAfter})`,
+  );
+  note(toggleReport.role === "radiogroup" ? "PASS" : "FAIL", `index: network switch role = ${toggleReport.role}`);
+  note(toggleReport.checkedCount === 1 ? "PASS" : "FAIL", `index: exactly one aria-checked (got ${toggleReport.checkedCount})`);
+  note(toggleReport.netRestored ? "PASS" : "WARN", "index: network restored after test");
 
   // ---- docs page ----------------------------------------------------------
   await page.goto(`${BASE}docs.html`, { waitUntil: "domcontentloaded", timeout: 45_000 });

@@ -265,7 +265,7 @@ Then ask your assistant:
 | Variable | Default | Purpose |
 |---|---|---|
 | `OLEX_NETWORK` | `testnet` | Set to `mainnet` to switch default network |
-| `OLEX_TIMEOUT_MS` | `15000` | Per-request timeout |
+| `OLEX_TIMEOUT_MS` | `15000` testnet / `45000` mainnet | Per-request timeout. Set it to override both defaults |
 | `OLEX_VIEW_KEY` | unset | Enables the view-key tools. Never committed, never logged |
 
 Testnet is the default everywhere. Pointing an autonomous agent at mainnet has to be

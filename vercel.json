@@ -4,6 +4,11 @@
   "outputDirectory": "web",
   "cleanUrls": true,
   "trailingSlash": false,
+  "functions": {
+    "api/mcp.js": {
+      "maxDuration": 60
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
