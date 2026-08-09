@@ -150,6 +150,8 @@ is one bad edit away from being wrong.
 ## Install
 
 ```bash
+git clone https://github.com/Ritapossible/olex.git
+cd olex
 npm install
 npm run build
 ```

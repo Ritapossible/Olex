@@ -184,7 +184,7 @@ a { color: inherit; }
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--surface-2); color: var(--text-secondary);
-  font: inherit; cursor: pointer;
+  font: inherit; cursor: pointer; text-decoration: none;
   -webkit-tap-highlight-color: transparent;
   transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
@@ -533,6 +533,10 @@ a { color: inherit; }
   display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   padding-block: 24px; font-size: 13px;
 }
+/* Underlined, because this is the one link in the footer and a colour shift
+   alone would be the only thing marking it - hue is never the sole signal. */
+.foot-link { color: var(--text-secondary); text-decoration: underline; }
+.foot-link:hover { color: var(--text-primary); }
 
 /* ============================================================================
    responsive
@@ -580,6 +584,10 @@ a { color: inherit; }
     padding: 0; justify-content: center;
   }
   .conn #conn-label { display: none; }
+  /* Same reason, one control further: the repo link is the most droppable
+     thing in the bar because the footer carries it as text on every page.
+     Collapsing the pill alone no longer buys back enough width here. */
+  .gh-link { display: none; }
 }
 
 @media (max-width: 560px) {
