@@ -135,7 +135,7 @@ configuration flag.
 
 ```
 stdio (your machine)                hosted bridge (Vercel)
-13 tools, 3 prompts                 10 tools, 2 prompts
+13 tools, 3 prompts                 10 tools, no prompt surface
 src/index.ts                        api/mcp.js
   createServer({viewKeyTools:true})   createServer()
   + registerVaultTools()              (no vault import)
@@ -158,7 +158,9 @@ real handshake, and dispatches a real `tools/call`. The tool code that runs is t
 code an editor gets over stdio. It speaks plain JSON (`{"tool": ..., "arguments": {...}}`,
 or `{"method": "tools/list"}`), not the MCP wire protocol, because a serverless
 invocation cannot hold the session state a streamable-HTTP transport requires between
-the handshake and the call.
+the handshake and the call. Those two routes are the whole HTTP vocabulary - there is no
+prompt route, so the prompts exist on the server object inside an invocation but nothing
+over HTTP can reach them.
 
 So: to use Olex from an assistant, install it over stdio as above. To host the dashboard
 and playground yourself, deploy the repo to Vercel - `vercel.json` carries the build,
