@@ -15,15 +15,19 @@ leak?"* and it calls Olex directly, instead of you switching to a terminal.
 
 | Area | State |
 |---|---|
-| Read-only chain tools (6) | working, verified against live testnet |
+| Read-only chain tools (6) | working, verified against live testnet and mainnet |
 | Privacy analysis tools (3) | working, verified against deployed programs |
 | View-key tools (3) | working, local-only, opt-in |
 | Unit conversion | working, exact bigint math |
 | Guided prompts (3) | working |
-| Web dashboard + docs | working, live testnet data |
+| Web dashboard + docs | working, live data, switchable testnet/mainnet |
 | Hosted HTTP bridge (10 tools) | working, view-key tools excluded by design |
 | Leo compile / run / test | blocked, needs Leo CLI + Rust |
 | Deploy / execute | blocked, needs Leo CLI + funded account |
+
+Both networks are live. Testnet is the default because pointing an autonomous agent at
+mainnet should be a deliberate act - not a scope limit. Every tool takes a per-call
+`network` argument, and `OLEX_NETWORK` moves the default.
 
 Everything listed as working is exercised end-to-end by `npm run smoke` (real stdio
 JSON-RPC against the live network) and `npm run smoke:http` (the hosted bridge over a
@@ -143,15 +147,34 @@ tools are not disabled on the bridge, they are not present in its bundle at all.
 WASM cryptography they depend on stays out of the serverless build for the same reason.
 
 This is enforced by construction rather than by a runtime check, because a runtime check
-is one bad edit away from being wrong.
+is one bad edit away from being wrong. `api/mcp.js` then names its ten tools in an
+explicit allowlist - a second, independent barrier, so a stray future export cannot
+become reachable from the browser by accident.
+
+**The bridge is not an endpoint you register with an MCP client.** It exists so the web
+playground exercises the real product rather than a browser-side reimplementation of it:
+each POST spins up a genuine MCP client/server pair over an in-memory transport, does the
+real handshake, and dispatches a real `tools/call`. The tool code that runs is the same
+code an editor gets over stdio. It speaks plain JSON (`{"tool": ..., "arguments": {...}}`,
+or `{"method": "tools/list"}`), not the MCP wire protocol, because a serverless
+invocation cannot hold the session state a streamable-HTTP transport requires between
+the handshake and the call.
+
+So: to use Olex from an assistant, install it over stdio as above. To host the dashboard
+and playground yourself, deploy the repo to Vercel - `vercel.json` carries the build,
+routing, and CSP configuration, and the bridge needs no secrets, since it holds no key
+material by construction.
 
 ---
 
 ## Install
 
+Node 20 or newer. Nothing else - no Rust, no Leo CLI, no local node. Olex reads
+the public Aleo REST API over HTTPS.
+
 ```bash
-git clone https://github.com/Ritapossible/olex.git
-cd olex
+git clone https://github.com/Ritapossible/Olex.git
+cd Olex
 npm install
 npm run build
 ```
@@ -298,13 +321,21 @@ public Aleo API directly from the browser (verified `Access-Control-Allow-Origin
 so it needs no backend:
 
 ```bash
-cd web && python -m http.server 8080
+node scripts/serve-web.mjs   # http://127.0.0.1:8080
 ```
+
+Use that rather than `python -m http.server`: the pages link to `./docs` without an
+extension, which production resolves through Vercel's `cleanUrls`. A plain static
+server returns 404 for it, so the Docs link appears broken when the site is fine.
 
 - `/` - live block height, a block-interval sparkline, a recent-blocks feed, and a
   playground that runs the same queries the MCP tools run.
 - `/docs` - the full reference: install, configuration, privacy model, every tool,
   prompts, and the two-surface split.
+
+Both pages carry a testnet/mainnet switch. The choice is shared between them and
+persists across reloads, so the dashboard's figures and the network named in the docs'
+install snippets always agree.
 
 The chart palette was validated for colorblind separation and contrast rather than
 picked by eye - the blue/orange/aqua series clear all-pairs CVD dE >= 8 and
@@ -343,6 +374,7 @@ src/
 api/mcp.js            hosted HTTP bridge, no vault import
 scripts/smoke.mjs     end-to-end test over real stdio
 scripts/smoke-http.mjs  end-to-end test of the hosted bridge
+scripts/serve-web.mjs   local static server, matches production URL rules
 web/                  static dashboard and docs
 ```
 

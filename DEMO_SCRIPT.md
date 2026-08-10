@@ -1,13 +1,15 @@
 # Olex - demo video script
 
 A ~3 minute recording plan. Every number and every line of tool output below was
-captured from a real run against live testnet, not written by hand - but block
-heights change, so re-read anything time-sensitive off your own screen rather
-than reciting the figures here.
+captured from a real run against the live chain - testnet unless a block says
+mainnet - not written by hand. Block heights and proof targets change, so
+re-read anything time-sensitive off your own screen rather than reciting the
+figures here.
 
 **Before you record, check the hackathon's required video length and trim to fit.**
-The section timings assume 3:00. Cutting section 5 gets you to ~2:20; cutting
-sections 5 and 6 gets you to ~1:50.
+A full run including the network switch is ~3:10. Dropping section 5 (view keys)
+gets you to ~2:40; dropping sections 5 and 6 gets you to ~2:20. Keep the switch -
+it is ten seconds and it closes a question judges will otherwise ask.
 
 ---
 
@@ -17,6 +19,10 @@ Do all of this before hitting record.
 
 - [ ] `npm run build` - clean
 - [ ] `npm run smoke` - passes (proves the network is reachable right now)
+- [ ] If you plan to show the network switch, open the dashboard and click to
+      Mainnet once before recording. The first mainnet call is cold and can take
+      ~19s; the second is fast. Warming it is the difference between a crisp cut
+      and twenty seconds of dead air.
 - [ ] Editor font at 16pt or larger. Judges watch on laptops, sometimes phones.
 - [ ] Dark theme on both editor and the Olex site, so the cuts don't flash white.
 - [ ] Close Slack, mail, notifications. A popup mid-demo costs you a retake.
@@ -126,7 +132,51 @@ chain rather than just calling its API. Judges notice that.
 
 ---
 
-## Section 4 - The part no explorer can do (1:20 - 2:10)
+## Section 3b - the network switch (1:20 - 1:30)
+
+Record this immediately after section 3, while the dashboard and live chain
+state are already on screen. That adjacency is what makes it a ten-second beat
+instead of a scene change.
+
+Not optional any more. Both networks are live and verified, and "does this only
+work on testnet?" is a question a judge will otherwise carry to the end of the
+video. Ten seconds spent here is cheaper than leaving it open.
+
+Budget note: this is what pushes a full run to ~3:10. If you are capped at 3:00,
+take the ten seconds out of section 5, which is the most compressible - the
+view-key boundary survives being stated in two sentences instead of three.
+
+**Screen:** The dashboard. Click the network switch from Testnet to Mainnet and
+let the height repaint.
+
+**Say:**
+
+> Same tools, either network. Testnet is the default deliberately - pointing an
+> autonomous agent at mainnet should be a decision, not a drift.
+
+**Real captured mainnet output**, for reference - read your own screen, this
+moves:
+
+```
+**Aleo mainnet - online**
+- Latest block: **20,964,402**
+- Round: 42,391,480
+- Proof target: 22,363,118,239,313
+```
+
+**Accuracy note:** mainnet's first call can be slow - one cold request took
+**19.3 seconds**, above the 15-second default timeout. Set
+`OLEX_TIMEOUT_MS=45000` before recording, and warm the switch once so the demo
+call hits a warm path.
+
+**Shot note:** the dashboard tile shows this as `22.36T` with the exact figure on
+the line beneath. That is deliberate - fourteen digits overflow the tile at every
+width - so don't read the headline as the whole number. The full figure is right
+there under it, and the tool output in your editor always prints it in full.
+
+---
+
+## Section 4 - The part no explorer can do (1:30 - 2:20)
 
 This is your strongest section. Give it room and do not rush it.
 
@@ -186,7 +236,7 @@ to show `olex_explain_transaction_privacy` walking a real landed transaction.
 
 ---
 
-## Section 5 - View keys and the security boundary (2:10 - 2:40)
+## Section 5 - View keys and the security boundary (2:20 - 2:50)
 
 **Screen:** Split or cut between the docs page "Surfaces" section and your editor.
 
@@ -208,44 +258,15 @@ project from a weekend script.
 
 ---
 
-## Optional - the network switch (10 seconds, anywhere after section 3)
-
-Worth 10 seconds because "works on mainnet" is a question a judge will have,
-and answering it before they ask is cheaper than answering it after.
-
-**Screen:** The dashboard. Click the network switch from Testnet to Mainnet and
-let the height repaint.
-
-**Say:**
-
-> Same tools, either network. Testnet is the default deliberately - pointing an
-> autonomous agent at mainnet should be a decision, not a drift.
-
-**Real captured mainnet output**, for reference - read your own screen, this
-moves:
-
-```
-**Aleo mainnet - online**
-- Latest block: **20,933,704**
-- Round: 42,328,594
-- Proof target: 17,434,525,950,403
-```
-
-**Accuracy note:** mainnet's first call can be slow - one cold request took
-**19.3 seconds**, above the 15-second default timeout. Set
-`OLEX_TIMEOUT_MS=45000` before recording, and warm the switch once so the demo
-call hits a warm path.
-
----
-
-## Section 6 - Close (2:40 - 3:00)
+## Section 6 - Close (2:50 - 3:10)
 
 **Screen:** The dashboard, live block height ticking. Or the GitHub repo page.
 
 **Say:**
 
-> Everything you just saw runs against live testnet and is covered by an
-> end-to-end smoke suite - real JSON-RPC over stdio, no mocks.
+> Everything you just saw runs against the live chain - testnet and mainnet
+> both - and is covered by an end-to-end smoke suite: real JSON-RPC over stdio,
+> no mocks.
 >
 > Olex is MIT licensed and installs into any MCP client. It's the bridge between
 > AI agents and Aleo's privacy model.
