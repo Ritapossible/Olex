@@ -35,11 +35,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ritapossible/olex.git"
+    "url": "git+https://github.com/Ritapossible/Olex.git"
   },
-  "homepage": "https://github.com/Ritapossible/olex#readme",
+  "homepage": "https://github.com/Ritapossible/Olex#readme",
   "bugs": {
-    "url": "https://github.com/Ritapossible/olex/issues"
+    "url": "https://github.com/Ritapossible/Olex/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
