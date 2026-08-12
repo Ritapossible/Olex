@@ -148,6 +148,83 @@ try {
   });
   check("olex_get_program credits.aleo", /program credits\.aleo/.test(text(prog)));
 
+  /* The mapping tool is the public half of the balance story - `account` is
+     where get_balance's number actually comes from - so it is checked against
+     the same address, and the two must agree.
+
+     The empty and misspelled cases matter more than the happy path. The API
+     answers 200 `null` to both, so before this was pinned a typo in the mapping
+     name came back as "no value set for this key": an agent reading that would
+     report a funded account as empty and never see a failure. */
+  const mapping = await send("tools/call", {
+    name: "olex_get_mapping_value",
+    arguments: {
+      program_id: "credits.aleo",
+      mapping_name: "account",
+      key: "aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px",
+    },
+  });
+  const mappingText = text(mapping);
+  check("olex_get_mapping_value reads credits.aleo/account",
+    mapping.result?.isError !== true && /Value: `\d+u64`/.test(mappingText),
+    mappingText.match(/Value: .*/)?.[0]);
+  check("mapping value agrees with olex_get_balance",
+    mappingText.match(/Value: `(\d+)u64`/)?.[1] === balText.match(/\(([\d,]+) microcredits\)/)?.[1]?.replace(/,/g, ""),
+    `mapping ${mappingText.match(/Value: `(\d+)u64`/)?.[1]} vs balance ${balText.match(/\(([\d,]+) microcredits\)/)?.[1]}`);
+
+  // A real mapping, a well-formed address that simply has no entry. This must
+  // stay a successful empty answer - the misspelling check below must not be
+  // over-eager enough to turn it into an error.
+  const emptyKey = await send("tools/call", {
+    name: "olex_get_mapping_value",
+    arguments: {
+      program_id: "credits.aleo", mapping_name: "account", key: THROWAWAY_ADDRESS,
+    },
+  });
+  check("key with no entry is an empty value, not an error",
+    emptyKey.result?.isError !== true && /no value set/.test(text(emptyKey)),
+    text(emptyKey).split("\n")[0]);
+
+  const badMapping = await send("tools/call", {
+    name: "olex_get_mapping_value",
+    arguments: {
+      program_id: "credits.aleo", mapping_name: "no_such_mapping",
+      key: "aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px",
+    },
+  });
+  check("misspelled mapping is rejected with the available list",
+    badMapping.result?.isError === true && /It defines: .*account/.test(text(badMapping)),
+    text(badMapping).split("\n")[0]);
+
+  const badProgram = await send("tools/call", {
+    name: "olex_get_mapping_value",
+    arguments: { program_id: "not a program", mapping_name: "account", key: "x" },
+  });
+  check("invalid program ID rejected before any request",
+    badProgram.result?.isError === true);
+
+  /* Everything above runs on the default network. The `network` argument is a
+     headline feature - every page carries the switch - and mainnet is a
+     genuinely different upstream with its own slower budget, so it gets one
+     read-only call rather than being assumed to work because testnet does.
+     Comparing the two heights proves the argument was actually honoured: an
+     ignored `network` would return the same chain twice. */
+  console.log("\n--- mainnet, via the network argument ---\n");
+
+  const mainnet = await send("tools/call", {
+    name: "olex_network_status", arguments: { network: "mainnet" },
+  });
+  const mainnetText = text(mainnet);
+  check("olex_network_status on mainnet",
+    mainnet.result?.isError !== true && /Latest block: \*\*[\d,]+\*\*/.test(mainnetText),
+    mainnetText.split("\n")[0]);
+  const heightOf = (t) => t.match(/Latest block: \*\*([\d,]+)\*\*/)?.[1];
+  check("mainnet is a different chain from testnet",
+    heightOf(mainnetText) && heightOf(statusText) &&
+    heightOf(mainnetText) !== heightOf(statusText),
+    `mainnet ${heightOf(mainnetText)} vs testnet ${heightOf(statusText)}`);
+  check("mainnet output is not labelled testnet", !/testnet/i.test(mainnetText));
+
   console.log("\n--- privacy analysis (no keys) ---\n");
 
   const analysis = await send("tools/call", {

@@ -12,6 +12,7 @@ import {
   apiGet,
   getLatestHeight,
   resolveNetwork,
+  type NetworkConfig,
   type NetworkName,
 } from "../lib/network.js";
 import {
@@ -46,6 +47,28 @@ interface Block {
   header?: BlockHeader;
   transactions?: unknown[];
   solutions?: unknown;
+}
+
+/**
+ * The mappings a program declares, or null if the list could not be read.
+ *
+ * Null means "could not establish", never "the program has none". The only
+ * caller uses this to turn an ambiguous empty answer into a specific one, so a
+ * failed lookup has to leave the working path alone rather than convert a
+ * successful read into an error.
+ */
+async function mappingNames(
+  net: NetworkConfig,
+  id: string,
+): Promise<string[] | null> {
+  try {
+    const raw = await apiGet(net, `/program/${id}/mappings`);
+    // apiGet hands back raw text for the endpoints that answer with a bare
+    // string, so the array shape has to be checked rather than assumed.
+    return Array.isArray(raw) ? raw.map((m) => String(m)) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function registerChainTools(server: McpServer): void {
@@ -236,15 +259,40 @@ export function registerChainTools(server: McpServer): void {
         return fail(null, `"${id}" is not a valid program ID.`);
       }
 
+      const mapping = mapping_name.trim();
+
       try {
         const raw = await apiGet(
           net,
-          `/program/${id}/mapping/${encodeURIComponent(mapping_name.trim())}/${encodeURIComponent(key.trim())}`,
+          `/program/${id}/mapping/${encodeURIComponent(mapping)}/${encodeURIComponent(key.trim())}`,
         );
-        const value =
-          raw === null || String(raw) === "null"
-            ? "_(no value set for this key)_"
-            : `\`${String(raw).replace(/^"|"$/g, "")}\``;
+
+        /* The API answers 200 `null` for two different questions: "this key has
+           no entry" and "this mapping does not exist". Rendering both as "no
+           value set" meant a misspelled mapping name reported a funded account
+           as empty - the worst possible answer for an agent, because it is a
+           confident wrong one rather than a visible failure.
+
+           Only the null branch pays for the extra lookup, and only to tell the
+           two apart. If that lookup cannot be made, the original answer stands:
+           an ambiguous success beats inventing an error. */
+        const empty = raw === null || String(raw) === "null";
+        if (empty) {
+          const names = await mappingNames(net, id);
+          if (names && !names.includes(mapping)) {
+            return fail(
+              null,
+              `\`${id}\` has no mapping named '${mapping}'. ` +
+                (names.length
+                  ? `It defines: ${names.join(", ")}.`
+                  : "It defines no mappings."),
+            );
+          }
+        }
+
+        const value = empty
+          ? "_(no value set for this key)_"
+          : `\`${String(raw).replace(/^"|"$/g, "")}\``;
 
         return ok(
           `**${id}** / \`${mapping_name}\` / \`${key}\`\n\nValue: ${value}\n\nNetwork: ${net.name}`,
