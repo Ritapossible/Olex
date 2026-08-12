@@ -31,7 +31,7 @@
 
 <header class="topbar">
   <div class="wrap topbar-inner">
-    <a class="brand" href="#top">
+    <a class="brand" href="./">
       <span class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
           <path d="M16 3 4 24h5.6L16 12.4 22.4 24H28L16 3Z" fill="var(--series-1)"/>
@@ -41,11 +41,11 @@
       <span class="brand-text">Olex</span>
     </a>
 
-    <nav class="nav" id="site-nav" aria-label="Sections">
-      <a href="#live">Live network</a>
-      <a href="#playground">Playground</a>
-      <a href="#tools">Tools</a>
-      <a href="#install">Install</a>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <a href="./" aria-current="page">Overview</a>
+      <a href="./playground">Playground</a>
+      <a href="./tools">Tools</a>
+      <a href="./install">Install</a>
       <a href="./docs">Docs</a>
     </nav>
 
@@ -55,7 +55,7 @@
         <span class="conn-dot" aria-hidden="true"></span>
         <span id="conn-label">Connecting...</span>
       </span>
-      <a class="icon-btn gh-link" href="https://github.com/Ritapossible/olex" target="_blank"
+      <a class="icon-btn gh-link" href="https://github.com/Ritapossible/Olex" target="_blank"
          rel="noopener" aria-label="Olex on GitHub" title="Olex on GitHub">
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
           <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
@@ -92,11 +92,11 @@
         and reason about zero-knowledge state - without leaving the editor.
       </p>
       <div class="hero-actions">
-        <a class="btn-primary" href="#playground">Try it live</a>
-        <a class="btn-secondary" href="#install">Install</a>
+        <a class="btn-primary" href="./playground">Try it live</a>
+        <a class="btn-secondary" href="./install">Install</a>
       </div>
       <p class="hero-note">
-        This playground reads public chain state and analyses program privacy.
+        The playground reads public chain state and analyses program privacy.
         <span class="ink-2">Record decryption runs locally, where your view key
         never leaves your machine.</span>
       </p>
@@ -107,7 +107,7 @@
       <figcaption id="hero-fig-label" class="tile-label">Aleo testnet block height</figcaption>
       <div class="hero-value" id="hero-height" aria-live="polite">-</div>
       <div class="hero-sub">
-        <span class="mark-dot" style="background:var(--series-3)" aria-hidden="true"></span>
+        <span class="mark-dot" aria-hidden="true"></span>
         <span id="hero-status" class="ink-2">reading chain...</span>
       </div>
       <div class="spark-wrap">
@@ -118,11 +118,77 @@
     </figure>
   </section>
 
+  <!-- ───────────────────────── spec strip ─────────────────────────
+       Four facts that answer "is this real and is it for me" without
+       scrolling. Every figure here is fixed by the server, not fetched. -->
+  <section class="wrap strip-wrap" aria-label="At a glance">
+    <dl class="strip">
+      <div class="strip-item">
+        <dt>Tools</dt>
+        <dd>13</dd>
+      </div>
+      <div class="strip-item">
+        <dt>Prompts</dt>
+        <dd>3</dd>
+      </div>
+      <div class="strip-item">
+        <dt>Networks</dt>
+        <dd>testnet + mainnet</dd>
+      </div>
+      <div class="strip-item">
+        <dt>Transport</dt>
+        <dd>stdio · no host</dd>
+      </div>
+    </dl>
+  </section>
+
+  <!-- ───────────────────────── what it does ───────────────────────── -->
+  <section class="wrap section" id="what">
+    <div class="section-head">
+      <h2>What it gives your assistant</h2>
+      <p class="ink-2">
+        Three capabilities, in the order most people need them.
+      </p>
+    </div>
+
+    <div class="props">
+      <article class="prop">
+        <span class="prop-mark" aria-hidden="true" data-mark="1"></span>
+        <h3>Read the chain</h3>
+        <p class="ink-2">
+          Blocks, transactions, balances, deployed program source and any
+          on-chain mapping value - on testnet or mainnet, without a block
+          explorer tab.
+        </p>
+      </article>
+
+      <article class="prop">
+        <span class="prop-mark" aria-hidden="true" data-mark="2"></span>
+        <h3>See where privacy actually ends</h3>
+        <p class="ink-2">
+          Static analysis of a program's private/public boundary, including the
+          case that matters most: a private input that leaks into public mapping
+          state anyway.
+        </p>
+      </article>
+
+      <article class="prop">
+        <span class="prop-mark" aria-hidden="true" data-mark="3"></span>
+        <h3>Decrypt what is yours</h3>
+        <p class="ink-2">
+          Your view key resolves records no explorer can read. Those tools run
+          only on your machine over stdio - the hosted bridge does not register
+          them.
+        </p>
+      </article>
+    </div>
+  </section>
+
   <!-- ───────────────────────── live stats ───────────────────────── -->
   <section class="wrap section" id="live">
     <div class="section-head">
       <h2>Live network</h2>
-      <p class="ink-2">Polled directly from the public Aleo API every 15 seconds.</p>
+      <p class="ink-2">Polled directly from the public Aleo API every 15 seconds. Nothing on this page is seeded.</p>
     </div>
 
     <div class="tiles" id="tiles">
@@ -171,132 +237,46 @@
     </div>
   </section>
 
-  <!-- ───────────────────────── playground ───────────────────────── -->
-  <section class="wrap section" id="playground">
+  <!-- ───────────────────────── routes ─────────────────────────
+       The three pages this one used to be. Each says what is behind it
+       rather than repeating its own title. -->
+  <section class="wrap section" id="explore">
     <div class="section-head">
-      <h2>Playground</h2>
-      <p class="ink-2">
-        These are the exact calls the Olex MCP server makes. Run them here, or ask
-        your assistant to run them for you.
-      </p>
+      <h2>Where to next</h2>
+      <p class="ink-2">Everything below runs against the same server your editor would launch.</p>
     </div>
 
-    <div class="play">
-      <aside class="play-tools" role="tablist" aria-label="Tools">
-        <button class="play-tool is-active" role="tab" aria-selected="true" data-tool="status">
-          <span class="tool-name">olex_network_status</span>
-          <span class="tool-hint ink-3">no input</span>
-        </button>
-        <button class="play-tool" role="tab" aria-selected="false" data-tool="balance">
-          <span class="tool-name">olex_get_balance</span>
-          <span class="tool-hint ink-3">address</span>
-        </button>
-        <button class="play-tool" role="tab" aria-selected="false" data-tool="program">
-          <span class="tool-name">olex_get_program</span>
-          <span class="tool-hint ink-3">program id</span>
-        </button>
-        <button class="play-tool" role="tab" aria-selected="false" data-tool="mapping">
-          <span class="tool-name">olex_get_mapping_value</span>
-          <span class="tool-hint ink-3">program · mapping · key</span>
-        </button>
-        <button class="play-tool" role="tab" aria-selected="false" data-tool="block">
-          <span class="tool-name">olex_get_block</span>
-          <span class="tool-hint ink-3">height</span>
-        </button>
-        <button class="play-tool" role="tab" aria-selected="false" data-tool="transaction">
-          <span class="tool-name">olex_get_transaction</span>
-          <span class="tool-hint ink-3">transaction id</span>
-        </button>
-        <button class="play-tool" role="tab" aria-selected="false" data-tool="convert">
-          <span class="tool-name">olex_convert_credits</span>
-          <span class="tool-hint ink-3">amount · unit</span>
-        </button>
-        <button class="play-tool" role="tab" aria-selected="false" data-tool="analyze">
-          <span class="tool-name">olex_analyze_privacy</span>
-          <span class="tool-hint ink-3">program id</span>
-        </button>
-        <button class="play-tool" role="tab" aria-selected="false" data-tool="txprivacy">
-          <span class="tool-name">olex_explain_transaction_privacy</span>
-          <span class="tool-hint ink-3">transaction id</span>
-        </button>
-        <button class="play-tool" role="tab" aria-selected="false" data-tool="visibility">
-          <span class="tool-name">olex_check_visibility</span>
-          <span class="tool-hint ink-3">type annotation</span>
-        </button>
-      </aside>
+    <div class="routes">
+      <a class="route" href="./playground">
+        <span class="route-kicker ink-3">Interactive</span>
+        <span class="route-title">Playground</span>
+        <span class="route-desc ink-2">
+          Run ten of the tools in the browser, against live testnet or mainnet.
+          No install, no keys.
+        </span>
+        <span class="route-go" aria-hidden="true">Open playground →</span>
+      </a>
 
-      <div class="play-main">
-        <form class="play-form" id="play-form" autocomplete="off">
-          <div class="play-inputs" id="play-inputs"></div>
-          <div class="play-actions">
-            <button class="btn-primary" type="submit" id="play-run">Run tool</button>
-            <button class="btn-ghost" type="button" id="play-example">Use example</button>
-          </div>
-        </form>
+      <a class="route" href="./tools">
+        <span class="route-kicker ink-3">Reference</span>
+        <span class="route-title">Tool catalog</span>
+        <span class="route-desc ink-2">
+          All 13 tools, grouped by what they touch - and which three never
+          leave your machine.
+        </span>
+        <span class="route-go" aria-hidden="true">Browse tools →</span>
+      </a>
 
-        <div class="play-output">
-          <div class="play-output-head">
-            <span class="ink-3">Result</span>
-            <span class="play-timing ink-3" id="play-timing"></span>
-          </div>
-          <pre class="play-pre" id="play-out" aria-live="polite">Pick a tool and press <strong>Run tool</strong>.</pre>
-        </div>
-      </div>
+      <a class="route" href="./install">
+        <span class="route-kicker ink-3">Setup</span>
+        <span class="route-title">Install</span>
+        <span class="route-desc ink-2">
+          Copy-paste configuration for Claude Code, Cursor, VS Code, Zed, Codex
+          and six more.
+        </span>
+        <span class="route-go" aria-hidden="true">Get set up →</span>
+      </a>
     </div>
-  </section>
-
-  <!-- ───────────────────────── tool catalog ───────────────────────── -->
-  <section class="wrap section" id="tools">
-    <div class="section-head">
-      <h2>Tool catalog</h2>
-      <p class="ink-2">What your assistant can call once Olex is connected.</p>
-    </div>
-    <div class="cards" id="tool-cards"></div>
-  </section>
-
-  <!-- ───────────────────────── install ───────────────────────── -->
-  <section class="wrap section" id="install">
-    <div class="section-head">
-      <h2>Install</h2>
-      <p class="ink-2">Olex speaks MCP over stdio. There is no server to host - your client launches it.</p>
-    </div>
-
-    <div class="install-steps">
-      <div class="code-card">
-        <div class="code-head"><span>1 · Build</span></div>
-        <pre class="code"><code>git clone https://github.com/Ritapossible/olex.git
-cd olex
-npm install
-npm run build</code></pre>
-      </div>
-
-      <!-- Step 2 carries a client picker rather than one command: the syntax
-           differs per client, and a single snippet could only ever be right
-           for one of them. Tabs and panels are rendered from data in app.js. -->
-      <div class="code-card client-card">
-        <div class="code-head"><span>2 · Register with your client</span></div>
-        <div class="client-tabs" id="client-tabs" role="tablist" aria-label="MCP clients"></div>
-        <div class="client-panel" id="client-panel" role="tabpanel">
-          <p class="client-where" id="client-where"></p>
-          <pre class="code"><code id="client-code"></code></pre>
-          <p class="client-note ink-3" id="client-note"></p>
-        </div>
-      </div>
-
-      <div class="code-card">
-        <div class="code-head"><span>3 · Ask</span></div>
-        <pre class="code"><code>"What's the latest Aleo block height?"
-"Show me the credits.aleo program."
-"What's the public balance of aleo1rhg...?"</code></pre>
-      </div>
-    </div>
-
-    <p class="install-foot ink-2">
-      The path must be absolute. A client launches the server from its own
-      working directory, not yours - on Windows, write it as
-      <code>C:\\path\\to\\olex\\dist\\index.js</code> inside JSON.
-      Full reference in the <a href="./docs#install">docs</a>.
-    </p>
   </section>
 </main>
 
@@ -304,13 +284,13 @@ npm run build</code></pre>
   <div class="wrap footer-inner">
     <span class="ink-3">Olex · MCP server for Aleo</span>
     <span class="ink-3">
-      <a class="foot-link" href="https://github.com/Ritapossible/olex" target="_blank" rel="noopener">Source on GitHub</a>
+      <a class="foot-link" href="https://github.com/Ritapossible/Olex" target="_blank" rel="noopener">Source on GitHub</a>
       · MIT
     </span>
     <span class="ink-3" id="foot-network">Data: public Provable API · testnet</span>
   </div>
 </footer>
 
-<script src="./app.js" type="module"></script>
+<script src="./live.js" type="module"></script>
 </body>
 </html>

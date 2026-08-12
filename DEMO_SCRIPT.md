@@ -64,8 +64,9 @@ establish why X should exist.
 
 ## Section 2 - What Olex is (0:25 - 0:45)
 
-**Screen:** The Olex landing page. Scroll slowly through the tool catalog so the
-13 cards register, then stop.
+**Screen:** Open on the landing page so the live block height is ticking, then
+click through to `/tools` and scroll slowly so the 13 cards register. Stop on the
+view-key group - it is the one the next line is about.
 
 **Say:**
 

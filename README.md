@@ -326,18 +326,28 @@ so it needs no backend:
 node scripts/serve-web.mjs   # http://127.0.0.1:8080
 ```
 
-Use that rather than `python -m http.server`: the pages link to `./docs` without an
-extension, which production resolves through Vercel's `cleanUrls`. A plain static
-server returns 404 for it, so the Docs link appears broken when the site is fine.
+Use that rather than `python -m http.server`: the pages link to each other without
+file extensions, which production resolves through Vercel's `cleanUrls`. A plain
+static server returns 404 for every one of them, so the whole nav appears broken
+when the site is fine.
 
-- `/` - live block height, a block-interval sparkline, a recent-blocks feed, and a
-  playground that runs the same queries the MCP tools run.
+- `/` - the overview: live block height, a block-interval sparkline, a recent-blocks
+  feed, and where to go next.
+- `/playground` - runs ten of the tools against live chain data, through the same
+  hosted bridge described above.
+- `/tools` - all 13 tools, grouped by what they touch, with the view-key three
+  called out as stdio-only.
+- `/install` - copy-paste configuration for ten MCP clients.
 - `/docs` - the full reference: install, configuration, privacy model, every tool,
   prompts, and the two-surface split.
 
-Both pages carry a testnet/mainnet switch. The choice is shared between them and
-persists across reloads, so the dashboard's figures and the network named in the docs'
-install snippets always agree.
+Every page carries a testnet/mainnet switch. The choice is shared across all of them
+and persists across reloads, so the dashboard's figures, the playground's results and
+the network named in the docs' install snippets always agree.
+
+Only `/` polls. `web/core.js` holds what every page needs - the selected network, the
+API client and its staleness guard, and the top-bar chrome - and each page loads one
+further module for its own behaviour.
 
 The chart palette was validated for colorblind separation and contrast rather than
 picked by eye - the blue/orange/aqua series clear all-pairs CVD dE >= 8 and
@@ -377,7 +387,8 @@ api/mcp.js            hosted HTTP bridge, no vault import
 scripts/smoke.mjs     end-to-end test over real stdio
 scripts/smoke-http.mjs  end-to-end test of the hosted bridge
 scripts/serve-web.mjs   local static server, matches production URL rules
-web/                  static dashboard and docs
+scripts/audit-ui.mjs    layout + console audit, 7 viewports x 5 pages
+web/                  five static pages; core.js shared, one module each
 ```
 
 Errors are returned as tool results with `isError`, never thrown - a thrown error

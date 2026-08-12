@@ -147,6 +147,17 @@ a { color: inherit; }
 }
 .nav a:hover { background: var(--surface-3); color: var(--text-primary); }
 
+/* The nav spans five pages now, so "which page am I on" has to be answerable
+   from the bar. Weight and colour carry it together - the underline is what
+   survives a greyscale print, and aria-current carries it to a screen reader
+   regardless. */
+.nav a[aria-current="page"] {
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--series-1);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
 .topbar-right { display: flex; align-items: center; gap: 10px; }
 
 .conn {
@@ -312,6 +323,7 @@ a { color: inherit; }
 
 .mark-dot {
   width: 9px; height: 9px; border-radius: 50%;
+  background: var(--series-3);
   box-shadow: 0 0 0 2px var(--surface-1);  /* surface ring */
   flex: none;
 }
@@ -377,6 +389,10 @@ a { color: inherit; }
 .feed-table tbody tr:last-child td { border-bottom: none; }
 .feed-table tbody tr { transition: background .12s ease; }
 .feed-table tbody tr:hover { background: var(--surface-3); }
+/* Was set from script as two inline style properties on every row build. It is
+   presentation and it never varies, so it belongs here. */
+.feed-link { color: var(--series-1); text-decoration: none; }
+.feed-link:hover { text-decoration: underline; }
 .hash { font-family: var(--mono); font-size: 12.5px; color: var(--text-secondary); }
 .skeleton-row td { color: var(--text-muted); text-align: center; padding-block: 28px; }
 
@@ -393,6 +409,20 @@ a { color: inherit; }
 .play {
   display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px;
   align-items: start;
+}
+
+/* The tool list is ten rows tall and the form above the output is short, so the
+   right column used to stop two-thirds of the way down and leave a rectangle of
+   dead space beside the sidebar - the single thing that made this page read as
+   a section that had been lifted out rather than a page. Let the output panel
+   absorb the slack instead. Only above the stacking breakpoint: once the
+   columns are on top of each other there is no sidebar to match and stretching
+   would just be a tall empty box. */
+@media (min-width: 961px) {
+  .play { align-items: stretch; }
+  .play-main { grid-template-rows: auto 1fr; }
+  .play-output { display: flex; flex-direction: column; }
+  .play-pre { flex: 1; }
 }
 
 /* The sidebar reads as one panel rather than seven loose buttons, which is
@@ -449,6 +479,8 @@ a { color: inherit; }
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--series-1) 24%, transparent);
 }
 .field .field-note { font-size: 12px; color: var(--text-muted); }
+/* Stand-in for the form when the selected tool takes no arguments. */
+.field-empty { font-size: 13.5px; }
 
 .play-actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
 
@@ -577,10 +609,162 @@ a { color: inherit; }
 .foot-link:hover { color: var(--text-primary); }
 
 /* ============================================================================
+   multi-page chrome
+   The playground, catalog and install guide became their own pages, so each
+   needs a header of its own and a way back out at the bottom. These are the
+   pieces the landing page's hero and sections do not cover.
+   ========================================================================= */
+
+/* A sub-page hero: same vertical rhythm as .hero, one column, no figure. */
+.page-hero { padding-block: 56px 36px; border-bottom: 1px solid var(--border); }
+.page-hero h1 {
+  font-size: clamp(28px, 3.6vw, 40px);
+  margin-bottom: 16px;
+  text-wrap: balance;
+}
+.page-hero .lede { max-width: 66ch; }
+.page-hero-note { margin-top: 16px; font-size: 13.5px; max-width: 66ch; }
+.page-hero-note a { color: var(--series-1); }
+.page-hero .doc-meta { margin-top: 20px; }
+
+/* First section after a .page-hero. The hero already drew the separating rule,
+   so this one must not draw a second one 40px below it. */
+.section-flush { padding-block: 36px 0; }
+
+/* The way onward from a leaf page. Not a nav - these are the two or three
+   places someone actually goes after reading, named by destination. */
+.next-row {
+  display: flex; flex-wrap: wrap; gap: 12px 28px;
+  padding-top: 4px;
+}
+.next-link {
+  font-size: 14.5px; font-weight: 500;
+  color: var(--series-1); text-decoration: none;
+  display: inline-flex; align-items: center; min-height: 32px;
+}
+.next-link:hover { text-decoration: underline; }
+
+/* ============================================================================
+   landing: spec strip
+   Four fixed facts directly under the hero. A <dl> because each one is a
+   term and its value, which is also how a screen reader should read it.
+   ========================================================================= */
+
+.strip-wrap { padding-bottom: 8px; }
+
+.strip {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px; margin: 0;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.strip-item { background: var(--surface-1); padding: 18px 20px; }
+.strip dt {
+  font-size: 11.5px; font-weight: 600; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.strip dd {
+  margin: 0; font-size: 17px; font-weight: 600;
+  letter-spacing: -0.02em; color: var(--text-primary);
+}
+
+/* ============================================================================
+   landing: value props
+   ========================================================================= */
+
+.props {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.prop {
+  padding: 24px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.prop h3 { font-size: 17px; margin-bottom: 10px; }
+.prop p { font-size: 14.5px; }
+
+/* A numbered mark rather than an icon: three abstract glyphs would have to be
+   invented and would carry less meaning than the order already does. */
+.prop-mark {
+  display: grid; place-items: center;
+  width: 30px; height: 30px; margin-bottom: 16px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--series-1) 16%, transparent);
+  color: var(--series-1);
+  font-size: 13px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.prop-mark::before { content: attr(data-mark); }
+
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .prop-mark { background: var(--surface-3); }
+}
+
+/* ============================================================================
+   landing: route cards
+   The three pages this one used to contain.
+   ========================================================================= */
+
+.routes {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.route {
+  display: flex; flex-direction: column;
+  padding: 24px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: border-color .15s ease, transform .15s ease, background .15s ease;
+}
+.route:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  transform: translateY(-2px);
+}
+.route-kicker {
+  font-size: 11.5px; font-weight: 600; letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.route-title {
+  font-size: 20px; font-weight: 600; letter-spacing: -0.02em;
+  margin: 8px 0 10px;
+}
+.route-desc { font-size: 14.5px; }
+/* Pushed to the bottom so the arrow line sits flush across all three cards
+   regardless of how long each description runs. */
+.route-go {
+  margin-top: auto; padding-top: 18px;
+  font-size: 14px; font-weight: 600; color: var(--series-1);
+}
+
+/* ============================================================================
+   catalog page: groups
+   ========================================================================= */
+
+.cat-group + .cat-group { margin-top: 44px; }
+.cat-head {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 6px;
+}
+.cat-head h2 { font-size: 20px; letter-spacing: -0.02em; }
+.cat-count { font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.cat-blurb { font-size: 14.5px; max-width: 72ch; margin-bottom: 18px; }
+
+/* ============================================================================
    responsive
    ========================================================================= */
 
 @media (max-width: 960px) {
+  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .props, .routes { grid-template-columns: 1fr; gap: 14px; }
+  .route-go { padding-top: 14px; }
   .hero { grid-template-columns: 1fr; gap: 40px; padding-block: 48px 40px; }
   .hero h1 { max-width: none; }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -634,11 +818,20 @@ a { color: inherit; }
   .net-opt { padding: 4px 8px; font-size: 12px; }
 }
 
-/* Under ~380px even the shortened switch competes with the brand, so drop the
+/* Under ~400px even the shortened switch competes with the brand, so drop the
    inactive option and keep the active one as a tappable pill. The alternative
    name is lost, so the group gets an explicit accessible name here - "Testnet"
-   alone would otherwise read as a label rather than a control. */
-@media (max-width: 380px) {
+   alone would otherwise read as a label rather than a control.
+
+   This was 380px and was 20px too generous. At 390px - iPhone 12/13/14 Pro,
+   one of the most common viewports there is - both options still rendered and
+   .topbar-right measured 280px against a 390px viewport, pushing the page 6px
+   wider than the screen. 375px passed (below the old breakpoint) and 430px
+   passed (enough room for both), so the defect sat in a ~16px window that
+   happened to contain a very popular phone. Measured at 400px the bar has
+   8px of slack. theme.js runs the matching matchMedia query and both have to
+   move together. */
+@media (max-width: 400px) {
   .net-opt { display: none; }
   .net-opt.is-active { display: inline-grid; }
 }
@@ -695,6 +888,19 @@ a { color: inherit; }
   .btn-primary, .btn-secondary { min-height: 46px; padding-inline: 22px; }
 
   .nav a { min-height: 44px; display: flex; align-items: center; }
+
+  /* The footer's repo link measured 102x17 - the one target under 44px in every
+     audit run since the footer was written. It is a real link on every page, so
+     it gets a real hit area; the row is already a flex column on a phone, so
+     growing it costs no layout. .next-link is new and would have landed in the
+     same place. */
+  .foot-link, .next-link {
+    display: inline-flex; align-items: center; min-height: 44px;
+  }
+
+  /* The docs table of contents: ten full-width rows at 33px. Width was never
+     the problem, so this only buys back height. */
+  .doc-toc a { min-height: 44px; display: flex; align-items: center; }
 
   .feed-table td { padding-block: 12px; }
   .feed-table td a {

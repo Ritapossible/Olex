@@ -22,7 +22,7 @@
       ]
     },
     {
-      "source": "/(app.js|docs.js|theme.js|theme-init.js|styles.css)",
+      "source": "/(core.js|live.js|playground.js|catalog.js|clients.js|docs.js|theme.js|theme-init.js|styles.css)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]

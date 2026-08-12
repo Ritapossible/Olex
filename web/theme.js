@@ -170,12 +170,12 @@ export function initNetworkSwitch(onChange) {
     onChange?.(name);
   };
 
-  /* Under ~380px the stylesheet hides the inactive option, because the full
+  /* Under ~400px the stylesheet hides the inactive option, because the full
      switch competes with the brand for width. That would leave a control that
      cannot change anything - clicking the active option is a no-op - so when
      collapsed the visible pill cycles to the next network instead. The CSS
-     breakpoint and this query have to stay in step; both are 380px. */
-  const collapsed = window.matchMedia("(max-width: 380px)");
+     breakpoint and this query have to stay in step; both are 400px. */
+  const collapsed = window.matchMedia("(max-width: 400px)");
 
   const names = Object.keys(NETWORKS);
   const advance = () =>
